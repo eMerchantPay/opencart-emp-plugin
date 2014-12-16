@@ -211,11 +211,11 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 					$data = array(
 						'order_id'          => $transaction['order_id'],
 						'unique_id'         => $capture->unique_id,
-						'type'              => $capture->type,
+						'type'              => $capture->transaction_type,
 						'mode'              => $capture->mode,
 						'timestamp'         => $capture->timestamp,
 						'status'            => $capture->status,
-						'amount'            => $capture->amount,
+						'amount'            => \Genesis\Utils\Currency::exponentToReal($capture->amount,$capture->currency),
 						'currency'          => $capture->currency,
 						'message'           => isset($capture->message) ? $capture->message : '',
 						'technical_message' => isset($capture->technical_message) ? $capture->technical_message : '',
@@ -259,11 +259,11 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 					$data = array(
 						'order_id'          => $transaction['order_id'],
 						'unique_id'         => $refund->unique_id,
-						'type'              => $refund->type,
+						'type'              => $refund->transaction_type,
 						'mode'              => $refund->mode,
 						'timestamp'         => $refund->timestamp,
 						'status'            => $refund->status,
-						'amount'            => $refund->amount,
+						'amount'            => \Genesis\Utils\Currency::exponentToReal($refund->amount, $refund->currency),
 						'currency'          => $refund->currency,
 						'message'           => isset($refund->message) ? $refund->message : '',
 						'technical_message' => isset($refund->technical_message) ? $refund->technical_message : '',
@@ -299,17 +299,20 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 			$transaction = $this->model_payment_emerchantpay_direct->getTransactionById($this->request->post['reference_id']);
 
 			if (is_array($transaction)) {
-				$void = $this->model_payment_emerchantpay_direct->void($transaction['unique_id'], $this->request->post['message']);
+				$message = isset($this->request->post['message']) ? $this->request->post['message'] : '';
+
+				$void = $this->model_payment_emerchantpay_direct->void($transaction['unique_id'], $message);
 
 				if (is_object($void)) {
+
 					$data = array(
 						'order_id'          => $transaction['order_id'],
 						'unique_id'         => $void->unique_id,
-						'type'              => $void->type,
+						'type'              => $void->transaction_type,
 						'mode'              => $void->mode,
 						'timestamp'         => $void->timestamp,
 						'status'            => $void->status,
-						'amount'            => $void->amount,
+						'amount'            => \Genesis\Utils\Currency::exponentToReal($void->amount, $void->currency),
 						'currency'          => $void->currency,
 						'message'           => isset($void->message) ? $void->message : '',
 						'technical_message' => isset($void->technical_message) ? $void->technical_message : '',
@@ -330,24 +333,6 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 				'text'  => 'Invalid request, please try again!'
 			);
 		}
-
-		/*
-		$this->model_payment_sagepay_direct->logger('Void result:\r\n' . print_r($void_response, 1));
-
-		if (is_object($void_response)) {
-			$this->model_payment_sagepay_direct->addTransaction($sagepay_direct_order['sagepay_direct_order_id'], 'void', 0.00);
-			$this->model_payment_sagepay_direct->updateVoidStatus($sagepay_direct_order['sagepay_direct_order_id'], 1);
-
-			$json['msg'] = $this->language->get('text_void_ok');
-
-			$json['data'] = array();
-			$json['data']['date_added'] = date("Y-m-d H:i:s");
-			$json['error'] = false;
-		} else {
-			$json['error'] = true;
-			$json['msg'] = isset($void_response['StatuesDetail']) && !empty($void_response['StatuesDetail']) ? (string)$void_response['StatuesDetail'] : 'Unable to void';
-		}
-		*/
 
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
