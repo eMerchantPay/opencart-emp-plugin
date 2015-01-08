@@ -1,8 +1,8 @@
 <?php
-class ModelPaymentEmerchantPayDirect extends Model {
+class ModelPaymentEmerchantPayCheckout extends Model {
 	public function install() {
 		$this->db->query("
-			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "emerchantpay_direct_transactions` (
+			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "emerchantpay_checkout_transactions` (
 			  `unique_id` VARCHAR(255) NOT NULL,
 			  `reference_id` VARCHAR(255) NOT NULL,
 			  `order_id` INT(11) NOT NULL,
@@ -20,11 +20,11 @@ class ModelPaymentEmerchantPayDirect extends Model {
 
 	public function uninstall() {
 		// Do nothing for now, destroying table with transactions is not a good idea
-		$this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "emerchantpay_direct_transactions`;");
+		$this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "emerchantpay_checkout_transactions`;");
 	}
 
 	public function getTransactionById($reference_id) {
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_direct_transactions` WHERE `unique_id` = '" . $this->db->escape($reference_id) . "' LIMIT 1");
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_checkout_transactions` WHERE `unique_id` = '" . $this->db->escape($reference_id) . "' LIMIT 1");
 
 		if ($query->num_rows) {
 			return reset($query->rows);
@@ -34,7 +34,7 @@ class ModelPaymentEmerchantPayDirect extends Model {
 	}
 
 	public function getTransactionsByOrder($order_id) {
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_direct_transactions` WHERE `order_id` = '" . intval($order_id) . "'");
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_checkout_transactions` WHERE `order_id` = '" . intval($order_id) . "'");
 
 		if ($query->num_rows) {
 			return $query->rows;
@@ -47,7 +47,7 @@ class ModelPaymentEmerchantPayDirect extends Model {
 		try {
 			$this->db->query("
 			INSERT INTO
-				`" . DB_PREFIX . "emerchantpay_direct_transactions`
+				`" . DB_PREFIX . "emerchantpay_checkout_transactions`
 			SET
 				`unique_id` = '" . $data['unique_id'] . "',
 				`reference_id` = '" . $data['reference_id'] . "',
@@ -160,10 +160,10 @@ class ModelPaymentEmerchantPayDirect extends Model {
 
 			$genesis
 				->request()
-				->setTransactionId($transaction_id)
-				->setUsage($usage)
-				->setRemoteIp($remote_ip)
-				->setReferenceId($reference_id);
+					->setTransactionId($transaction_id)
+					->setUsage($usage)
+					->setRemoteIp($remote_ip)
+					->setReferenceId($reference_id);
 
 			$genesis->execute();
 
@@ -189,7 +189,7 @@ class ModelPaymentEmerchantPayDirect extends Model {
 	}
 
 	public function getTransactionTypes() {
-		$this->load->language('payment/emerchantpay_direct');
+		$this->load->language('payment/emerchantpay_checkout');
 
 		return array(
 			'authorize'    => array (
@@ -260,8 +260,8 @@ class ModelPaymentEmerchantPayDirect extends Model {
 	 * @param $exception
 	 */
 	public function logEx($exception) {
-		if ($this->config->get('emerchantpay_direct_debug')) {
-			$log = new Log('emerchantpay_direct.log');
+		if ($this->config->get('emerchantpay_checkout_debug')) {
+			$log = new Log('emerchantpay_checkout.log');
 			$log->write($this->jTraceEx($exception));
 		}
 	}

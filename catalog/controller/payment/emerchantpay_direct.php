@@ -61,18 +61,6 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 			);
 		}
 
-		if ($this->config->get('sagepay_direct_card') == '1') {
-			$data['sagepay_direct_card'] = true;
-		} else {
-			$data['sagepay_direct_card'] = false;
-		}
-
-		$data['existing_cards'] = array();
-		if ($this->customer->isLogged() && $data['sagepay_direct_card']) {
-			$this->load->model('payment/sagepay_direct');
-			$data['existing_cards'] = $this->model_payment_sagepay_direct->getCards($this->customer->getId());
-		}
-
 		if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/emerchantpay_direct.tpl')) {
 			return $this->load->view($this->config->get('config_template') . '/template/payment/emerchantpay_direct.tpl', $data);
 		} else {
@@ -80,6 +68,11 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 		}
 	}
 
+	/**
+	 * Process order confirmation
+	 *
+	 * @return void
+	 */
 	public function send() {
 		$this->load->model('checkout/order');
 		$this->load->model('payment/emerchantpay_direct');
@@ -87,10 +80,6 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 		$this->load->language('payment/emerchantpay_direct');
 
 		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
-
-		$expiration = explode('/', $this->request->post['emerchantpay_direct-cc-expiration']);
-
-		$json = '';
 
 		try {
 
@@ -105,10 +94,10 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 				'customer_phone'    => $order_info['telephone'],
 
 				'card_holder'       => $this->request->post['emerchantpay_direct-cc-holder'],
-				'card_number'       => str_replace(' ', '', $this->request->post['emerchantpay_direct-cc-number']),
-				'cvv'               => intval($this->request->post['emerchantpay_direct-cc-cvv']),
-				'expiration_month'  => trim($expiration[0]),
-				'expiration_year'   => '20' . trim($expiration[1]),
+				'card_number'       => $this->ccFilter($this->request->post['emerchantpay_direct-cc-number'], 'number'),
+				'cvv'               => $this->ccFilter($this->request->post['emerchantpay_direct-cc-cvv'], 'cvv'),
+				'expiration_month'  => $this->ccFilter($this->request->post['emerchantpay_direct-cc-expiration'], 'month'),
+				'expiration_year'   => $this->ccFilter($this->request->post['emerchantpay_direct-cc-expiration'], 'year'),
 
 				'billing'           => array(
 					'first_name'    => $order_info['payment_firstname'],
@@ -133,51 +122,85 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 				)
 			);
 
-			$response = $this->model_payment_emerchantpay_direct->sendTransaction($data);
+			$transaction = $this->model_payment_emerchantpay_direct->sendTransaction($data);
 
-			if (is_object($response)) {
+			if (isset($transaction->response)) {
+				$amount = $this->model_payment_emerchantpay_direct->convertCurrency(
+					$transaction->response->amount,
+					$transaction->response->currency
+				);
+
 				$data = array(
 					'order_id'          => $order_info['order_id'],
-					'unique_id'         => $response->unique_id,
-					'type'              => $response->transaction_type,
-					'mode'              => $response->mode,
-					'timestamp'         => $response->timestamp,
-					'status'            => $response->status,
-					'message'           => $response->message,
-					'technical_message' => $response->technical_message,
-					'amount'            => $this->model_payment_emerchantpay_direct->convertCurrency($response->amount, $response->currency),
-					'currency'          => $response->currency,
+					'unique_id'         => $transaction->response->unique_id,
+					'reference_id'      => '0',
+					'type'              => $transaction->response->transaction_type,
+					'mode'              => $transaction->response->mode,
+					'timestamp'         => $transaction->response->timestamp,
+					'status'            => $transaction->response->status,
+					'message'           => $transaction->response->message,
+					'technical_message' => $transaction->response->technical_message,
+					'amount'            => $amount,
+					'currency'          => $transaction->response->currency,
 				);
 
 				$this->model_payment_emerchantpay_direct->addTransaction($data);
 
-				$this->model_checkout_order->addOrderHistory(
-					$this->session->data['order_id'],
-					$this->config->get('emerchantpay_direct_order_status_id'),
-					$this->language->get('text_payment_successful'),
-					false
-				);
+				if (!$transaction->error) {
 
-				if (isset($response->redirect_url)) {
-					$json['redirect'] = strval($response->redirect_url);
+					if (isset($transaction->response->redirect_url)) {
+						$this->model_checkout_order->addOrderHistory(
+							$this->session->data['order_id'],
+							$this->config->get('emerchantpay_direct_async_order_status_id'),
+							$this->language->get('text_payment_status_init_async'),
+							false
+						);
+
+						$redirect_url = strval($transaction->response->redirect_url);
+					}
+					else {
+
+						$this->model_checkout_order->addOrderHistory(
+							$this->session->data['order_id'],
+							$this->config->get('emerchantpay_direct_order_status_id'),
+							$this->language->get('text_payment_status_successful'),
+							false
+						);
+
+						$redirect_url = $this->url->link('checkout/success', '', 'SSL');
+					}
+
+					$json = array(
+						'redirect' => $redirect_url
+					);
 				}
 				else {
-					$json['redirect'] = $this->url->link('checkout/success', '', 'SSL');
+					/*
+					$this->model_checkout_order->addOrderHistory(
+						$this->session->data['order_id'],
+						$this->config->get('emerchantpay_direct_order_failure_status_id'),
+						$this->language->get('text_payment_status_init_failed'),
+						false
+					);
+					*/
+
+					$json = array(
+						'error' => $this->language->get('text_payment_failure')
+					);
 				}
 			}
 			else {
-				$this->model_checkout_order->addOrderHistory(
-					$this->session->data['order_id'],
-					$this->config->get('emerchantpay_direct_order_status_id'),
-					$this->language->get('text_payment_unsuccessful'),
-					false
+				$json = array(
+					'error' => $this->language->get('text_payment_system_error')
 				);
-
-				$json['error'] = $this->language->get('text_failure_generic');
 			}
 		}
-		catch (Exception $e) {
-			$json['error'] = $this->language->get('text_system_error');
+		catch (Exception $exception) {
+			$json = array(
+				'error' => $this->language->get('text_payment_system_error')
+			);
+
+			$this->model_payment_emerchantpay_checkout->logEx($exception);
 		}
 
 		$this->response->addHeader('Content-Type: application/json');
@@ -185,10 +208,94 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 	}
 
 	/**
+	 * Process Async-transaction Notification
+	 *
+	 * @return void
+	 */
+	public function callback() {
+		$this->load->model('checkout/order');
+		$this->load->model('payment/emerchantpay_direct');
+
+		$this->load->language('payment/emerchantpay_direct');
+
+		try {
+			$this->model_payment_emerchantpay_direct->bootstrap();
+
+			$notification = new \Genesis\API\Notification();
+
+			$notification->parseNotification( $this->request->post );
+
+			if ( $notification->isAuthentic() || !$notification->isAuthentic() ) {
+				$reconcile = $this->model_payment_emerchantpay_direct->reconcile(
+					$notification->getParsedNotification()->unique_id
+				);
+
+				if (isset($reconcile->response)) {
+
+					$transaction = $this->model_payment_emerchantpay_direct->getTransactionById($reconcile->response->unique_id);
+
+					if ( isset( $transaction['order_id'] ) && intval($transaction['order_id']) > 0 ) {
+
+						// Check if somehow we already have this transaction in our database
+						$transactionEntry = $this->model_payment_emerchantpay_direct->getTransactionById(
+							$reconcile->response->unique_id
+						);
+
+						if (isset($transactionEntry['order_id'])) {
+							$amount = $this->model_payment_emerchantpay_direct->convertCurrency(
+								$reconcile->response->amount,
+								$reconcile->response->currency
+							);
+
+							$data = array(
+								'order_id'          => $transaction['order_id'],
+								'unique_id'         => $reconcile->response->unique_id,
+								'reference_id'      => '0',
+								'type'              => $reconcile->response->transaction_type,
+								'mode'              => $reconcile->response->mode,
+								'timestamp'         => $reconcile->response->timestamp,
+								'status'            => $reconcile->response->status,
+								'currency'          => $reconcile->response->currency,
+								'amount'            => $amount,
+								'message'           => isset($reconcile->response->message) ? $reconcile->response->message : '',
+								'technical_message' => isset($reconcile->response->technical_message) ? $reconcile->response->technical_message : '',
+							);
+
+							$this->model_payment_emerchantpay_direct->editTransaction($data);
+
+							if ($reconcile->response->status == 'approved') {
+								$this->model_checkout_order->addOrderHistory(
+									$transaction['order_id'],
+									$this->config->get('emerchantpay_direct_order_status_id'),
+									$this->language->get('text_payment_status_successful')
+								);
+							}
+							else {
+								$this->model_checkout_order->addOrderHistory(
+									$transaction['order_id'],
+									$this->config->get('emerchantpay_direct_failure_order_status_id'),
+									$this->language->get('text_payment_status_unsuccessful')
+								);
+							}
+						}
+
+						$this->response->addHeader('Content-Type: text/xml');
+						$this->response->setOutput($notification->getEchoResponse());
+					}
+				}
+			}
+		}
+		catch(Exception $exception) {
+			$this->model_payment_emerchantpay_direct->logEx($exception);
+		}
+	}
+
+	/**
 	 * 3D Callback
 	 *
 	 * @return void
 	 */
+	/*
 	public function callback() {
 		$this->load->model('checkout/order');
 		$this->load->model('payment/emerchantpay_direct');
@@ -242,11 +349,59 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 		}
 		catch(Exception $e) {
 			die($e->getMessage());
+			$this->model_payment_emerchantpay_direct->logEx($exception);
+		}
+	}
+	*/
+
+	/**
+	 * Sanitize incoming CC data
+	 *
+	 * @param $input
+	 * @param $type
+	 *
+	 * @return mixed|string
+	 */
+	public function ccFilter($input, $type) {
+		switch($type) {
+			case 'name':
+				return $input;
+				break;
+			case 'number':
+				return str_replace(' ', '', $input);
+				break;
+			case 'cvv':
+				return substr(strval($input), 0, 3);
+			case 'year':
+				@list($month, $year) = explode('/', $input);
+
+				$month  = trim($month);
+				$year   = trim($year);
+
+				if (isset($year) && strlen($year) > 0) {
+					if (strlen($year) == 2) {
+						return sprintf('20%s', strval($year));
+					}
+					else {
+						return substr(strval($year), 0, 4);
+					}
+				}
+				break;
+			case 'month':
+				@list($month, $year) = explode('/', $input);
+
+				if (isset($month) && strlen($month) > 0) {
+					return substr(strval($month), 0, 2);
+				}
+				break;
+			default:
+				return $input;
+				break;
 		}
 	}
 
 	/**
-	 * 3D success redirect
+	 * Async Transaction Redirect for Successful Payment
 	 *
 	 * @return void
 	 */
@@ -260,14 +415,14 @@ class ControllerPaymentEmerchantPayDirect extends Controller {
 	}
 
 	/**
-	 * 3D failure redirect
+	 * Async Transaction Redirect for Failed Payment
 	 *
 	 * @return void
 	 */
 	public function failure() {
-		$this->load->language('payment/emerchantpay_direct');
+		$this->load->language('payment/emerchantpay_checkout');
 
-		$this->session->data['error'] = $this->language->get('text_failure_generic');
+		$this->session->data['error'] = $this->language->get('text_payment_failure');
 
 		$this->response->redirect($this->url->link('checkout/checkout', '', 'SSL'));
 	}

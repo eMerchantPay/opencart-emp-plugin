@@ -1,6 +1,6 @@
 <?php
 // Text
-$_['text_title'] = 'Credit Card / Debit Card (eMerchantPay)';
+$_['text_title']                = 'Credit Card / Debit Card (eMerchantPay Checkout)';
 $_['text_credit_card']			= 'Card Details';
 $_['text_card_type']			= 'Card Type: ';
 $_['text_card_name']			= 'Card Name: ';
@@ -29,10 +29,11 @@ $_['help_start_date']			= '(if available)';
 $_['help_issue']				= '(for Maestro and Solo cards only)';
 
 // Errors
-$_['text_payment_failure']      = 'The transaction attempt was not successful, please verify your input or try again later!';
-$_['text_payment_system_error'] = "Sorry, we're experiencing issues processing your order.\nPlease try again or contact us for assistance!";
+$_['text_payment_failure']              = 'The transaction attempt was unsuccessful, please verify your input or try again later!';
+$_['text_payment_system_error']         = "Sorry, we're experiencing issues processing your order.\nPlease try again or contact us for assistance!";
 
 // Order Status
-$_['text_payment_status_successful']   = 'Payment successfully processed';
-$_['text_payment_status_init_async']   = 'Asynchronous payment initiated';
-$_['text_payment_status_unsuccessful'] = 'Payment attempt failed';
+$_['text_payment_status_successful']   = 'WPF payment successfully processed';
+$_['text_payment_status_unsuccessful'] = 'WPF payment failed';
+$_['text_payment_status_initiated']    = 'WPF Session Initiated';
+$_['text_payment_status_init_failed']  = 'WPF Session Initialization Failed';

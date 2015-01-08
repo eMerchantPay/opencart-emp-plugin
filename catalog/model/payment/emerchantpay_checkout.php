@@ -1,5 +1,5 @@
 <?php
-class ModelPaymentEmerchantPayDirect extends Model
+class ModelPaymentEmerchantPayCheckout extends Model
 {
 	const REQUEST_AUTHORIZE         = 1;
 	const REQUEST_SALE              = 2;
@@ -8,7 +8,6 @@ class ModelPaymentEmerchantPayDirect extends Model
 	const REQUEST_AUTHORIZE_3D      = 11;
 	const REQUEST_SALE_3D           = 12;
 	const REQUEST_INIT_RECURRING_3D = 13;
-
 
 	/**
 	 * Main method
@@ -19,13 +18,13 @@ class ModelPaymentEmerchantPayDirect extends Model
 	 * @return array
 	 */
 	public function getMethod($address, $total) {
-		$this->load->language('payment/emerchantpay_direct');
+		$this->load->language('payment/emerchantpay_checkout');
 
-		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('emerchantpay_direct_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('emerchantpay_checkout_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
 
-		if ($this->config->get('emerchantpay_direct_total') > 0 && $this->config->get('emerchantpay_direct_total') > $total) {
+		if ($this->config->get('emerchantpay_checkout_total') > 0 && $this->config->get('emerchantpay_checkout_total') > $total) {
 			$status = false;
-		} elseif (!$this->config->get('emerchantpay_direct_geo_zone_id')) {
+		} elseif (!$this->config->get('emerchantpay_checkout_geo_zone_id')) {
 			$status = true;
 		} elseif ($query->num_rows) {
 			$status = true;
@@ -37,14 +36,31 @@ class ModelPaymentEmerchantPayDirect extends Model
 
 		if ($status) {
 			$method_data = array(
-				'code'       => 'emerchantpay_direct',
+				'code'       => 'emerchantpay_checkout',
 				'title'      => $this->language->get('text_title'),
 				'terms'      => '',
-				'sort_order' => $this->config->get('emerchantpay_direct_sort_order')
+				'sort_order' => $this->config->get('emerchantpay_checkout_sort_order')
 			);
 		}
 
 		return $method_data;
+	}
+
+	/**
+	 * Get saved transaction (from DB) by id
+	 *
+	 * @param $unique_id
+	 *
+	 * @return bool|mixed
+	 */
+	public function getTransactionById($unique_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_checkout_transactions` WHERE `unique_id` = '" . $this->db->escape($unique_id) . "' LIMIT 1");
+
+		if ($query->num_rows) {
+			return reset($query->rows);
+		}
+
+		return false;
 	}
 
 	/**
@@ -60,11 +76,11 @@ class ModelPaymentEmerchantPayDirect extends Model
 
 			$this->db->query("
 				INSERT INTO
-					`" . DB_PREFIX . "emerchantpay_direct_transactions`
+					`" . DB_PREFIX . "emerchantpay_checkout_transactions`
 				SET
 					`unique_id` = '" . $data['unique_id'] . "',
-					`order_id`  = '" . $data['order_id'] . "',
 					`reference_id` = '" . $data['reference_id'] . "',
+					`order_id`  = '" . $data['order_id'] . "',
 					`type` = '" . $data['type'] . "',
 					`mode` = '" . $data['mode'] . "',
 					`timestamp` = '" . $data['timestamp'] . "',
@@ -80,57 +96,6 @@ class ModelPaymentEmerchantPayDirect extends Model
 		}
 	}
 
-
-	/**
-	 * Update transaction inside the database
-	 *
-	 * @param $data array
-	 */
-	public function editTransaction($data) {
-		try {
-			foreach($data as $column => &$value) {
-				$value = $this->db->escape($value);
-			}
-
-			$this->db->query("
-				UPDATE
-					`" . DB_PREFIX . "emerchantpay_direct_transactions`
-				SET
-					`reference_id` = '" . $data['reference_id'] . "',
-					`type` = '" . $data['type'] . "',
-					`mode` = '" . $data['mode'] . "',
-					`timestamp` = '" . $data['timestamp'] . "',
-					`status` = '" . $data['status'] . "',
-					`message` = '" . $data['message'] . "',
-					`technical_message` = '" . $data['technical_message'] . "',
-					`amount` = '" . $data['amount'] . "',
-					`currency` = '" . $data['currency'] . "'
-				WHERE
-					`unique_id` = '" . $data['unique_id'] . "';
-			");
-		}
-		catch (Exception $exception) {
-			$this->logEx($exception);
-		}
-	}
-
-	/**
-	 * Get saved transaction (from DB) by id
-	 *
-	 * @param $reference_id
-	 *
-	 * @return bool|mixed
-	 */
-	public function getTransactionById($reference_id) {
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_direct_transactions` WHERE `unique_id` = '" . $this->db->escape($reference_id) . "' LIMIT 1");
-
-		if ($query->num_rows) {
-			return reset($query->rows);
-		}
-
-		return false;
-	}
-
 	/**
 	 * Send transaction to Genesis
 	 *
@@ -138,33 +103,11 @@ class ModelPaymentEmerchantPayDirect extends Model
 	 *
 	 * @return mixed
 	 */
-	public function sendTransaction($data) {
+	public function create($data) {
 		try {
 			$this->bootstrap();
 
-			switch ($this->config->get('emerchantpay_direct_transaction_type')) {
-				case self::REQUEST_AUTHORIZE:
-					$genesis = new \Genesis\Genesis( 'Financial\Authorize' );
-					break;
-				case self::REQUEST_AUTHORIZE_3D:
-					$genesis = new \Genesis\Genesis( 'Financial\Authorize3D' );
-					break;
-				case self::REQUEST_INIT_RECURRING:
-					$genesis = new \Genesis\Genesis( 'Financial\Recurring\InitRecurringSale' );
-					break;
-				case self::REQUEST_INIT_RECURRING_3D:
-					$genesis = new \Genesis\Genesis( 'Financial\Recurring\InitRecurringSale3D' );
-					break;
-				case self::REQUEST_SALE:
-					$genesis = new \Genesis\Genesis( 'Financial\Sale' );
-					break;
-				case self::REQUEST_SALE_3D:
-					$genesis = new \Genesis\Genesis( 'Financial\Sale3D' );
-					break;
-				default:
-					$genesis = null;
-					break;
-			}
+			$genesis = new \Genesis\Genesis('WPF\Create');
 
 			$genesis
 				->request()
@@ -175,16 +118,18 @@ class ModelPaymentEmerchantPayDirect extends Model
 					->setCurrency($data['currency'])
 					->setAmount($data['amount'])
 
+					->setUsage('USSAGE')
+					->setDescription('DESC')
+
 					// Personal
 					->setCustomerEmail($data['customer_email'])
 					->setCustomerPhone($data['customer_phone'])
 
-					// CC
-					->setCardHolder($data['card_holder'])
-					->setCardNumber($data['card_number'])
-					->setCvv($data['cvv'])
-					->setExpirationMonth($data['expiration_month'])
-					->setExpirationYear($data['expiration_year'])
+					// URL
+					->setNotificationUrl($data['notification_url'])
+					->setReturnSuccessUrl($data['return_success_url'])
+					->setReturnFailureUrl($data['return_failure_url'])
+					->setReturnCancelUrl($data['return_cancel_url'])
 
 					// Billing
 					->setBillingFirstName($data['billing']['first_name'])
@@ -206,19 +151,12 @@ class ModelPaymentEmerchantPayDirect extends Model
 					->setShippingState($data['shipping']['state'])
 					->setShippingCountry($data['shipping']['country']);
 
-			if (in_array(
-					$this->config->get('emerchantpay_direct_transaction_type'),
-					array(
-						self::REQUEST_AUTHORIZE_3D, self::REQUEST_SALE_3D, self::REQUEST_INIT_RECURRING_3D
-					)
-				))
-			{
-				$genesis
-					->request()
-						->setNotificationUrl($this->url->link('payment/emerchantpay_direct/callback', '', 'SSL'))
-						->setReturnSuccessUrl($this->url->link('payment/emerchantpay_direct/success', '', 'SSL'))
-						->setReturnFailureUrl($this->url->link('payment/emerchantpay_direct/failure', '', 'SSL'));
+			if (is_array($this->config->get('emerchantpay_checkout_transaction_type'))) {
+				$transaction_types = $this->config->get('emerchantpay_checkout_transaction_type');
 
+				foreach ($transaction_types as $type) {
+					$genesis->request()->addTransactionType($this->getTrxTypeById($type));
+				}
 			}
 
 			$genesis->execute();
@@ -233,8 +171,7 @@ class ModelPaymentEmerchantPayDirect extends Model
 			else {
 				$response = array(
 					'error'     => true,
-					'message'   => strval($genesis->response()->getResponseObject()->message),
-					'response'  => $genesis->response()->getResponseObject()
+					'message'   => strval($genesis->response()->getResponseObject()->message)
 				);
 			}
 
@@ -256,11 +193,9 @@ class ModelPaymentEmerchantPayDirect extends Model
 		try {
 			$this->bootstrap();
 
-			$genesis = new \Genesis\Genesis('Reconcile\Transaction');
+			$genesis = new \Genesis\Genesis('WPF\Reconcile');
 
-			$genesis
-				->request()
-					->setUniqueId($unique_id);
+			$genesis->request()->setUniqueId($unique_id);
 
 			$genesis->execute();
 
@@ -276,10 +211,37 @@ class ModelPaymentEmerchantPayDirect extends Model
 		}
 	}
 
-	public function convertCurrency($amount, $currency) {
-		if (!class_exists('\Genesis\Genesis')) {
-			$this->model_payment_emerchantpay_direct->bootstrapGenesis();
+	public function getTrxTypeById($trx_type_id) {
+		$type = '';
+
+		switch(intval($trx_type_id)) {
+			case 1:
+				$type = 'authorize';
+				break;
+			case 11:
+				$type = 'authorize3d';
+				break;
+			case 2:
+				$type = 'sale';
+				break;
+			case 12:
+				$type = 'sale3d';
+				break;
 		}
+
+		return $type;
+	}
+
+	/**
+	 * Convert ISO-4217 to float
+	 *
+	 * @param $amount
+	 * @param $currency
+	 *
+	 * @return mixed
+	 */
+	public function convertCurrency($amount, $currency) {
+		$this->bootstrap();
 
 		return \Genesis\Utils\Currency::exponentToReal($amount, $currency);
 	}
@@ -294,11 +256,11 @@ class ModelPaymentEmerchantPayDirect extends Model
 		if (!class_exists('\Genesis\Genesis', false)) {
 			include DIR_APPLICATION . '/model/payment/libraries/genesis_php/vendor/autoload.php';
 
-			$environment = ( intval( $this->config->get( 'emerchantpay_direct_sandbox' ) ) == 1 ? 'sandbox' : 'production' );
+			$environment = ( intval( $this->config->get( 'emerchantpay_checkout_sandbox' ) ) == 1 ? 'sandbox' : 'production' );
 
-			\Genesis\GenesisConfig::setUsername( $this->config->get( 'emerchantpay_direct_username' ) );
-			\Genesis\GenesisConfig::setPassword( $this->config->get( 'emerchantpay_direct_password' ) );
-			\Genesis\GenesisConfig::setToken( $this->config->get( 'emerchantpay_direct_token' ) );
+			\Genesis\GenesisConfig::setUsername( $this->config->get( 'emerchantpay_checkout_username' ) );
+			\Genesis\GenesisConfig::setPassword( $this->config->get( 'emerchantpay_checkout_password' ) );
+			\Genesis\GenesisConfig::setToken( $this->config->get( 'emerchantpay_checkout_token' ) );
 
 			\Genesis\GenesisConfig::setEnvironment( $environment );
 		}
@@ -310,8 +272,8 @@ class ModelPaymentEmerchantPayDirect extends Model
 	 * @param $exception
 	 */
 	public function logEx($exception) {
-		if ($this->config->get('emerchantpay_direct_debug')) {
-			$log = new Log('emerchantpay_direct.log');
+		if ($this->config->get('emerchantpay_checkout_debug')) {
+			$log = new Log('emerchantpay_checkout.log');
 			$log->write($this->jTraceEx($exception));
 		}
 	}
