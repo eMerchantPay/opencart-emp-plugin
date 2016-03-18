@@ -1,27 +1,47 @@
+<?php
+/*
+ * Copyright (C) 2016 eMerchantPay Ltd.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * @author      eMerchantPay
+ * @copyright   2016 eMerchantPay Ltd.
+ * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
+ */
+?>
+
 <div class="panel-group" id="accordion">
     <div class="panel panel-default">
         <div class="panel-heading">
             <h4 class="panel-title">
                 <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-                    <span class="glyphicon glyphicon-folder-close"></span>
-                    <?php echo $text_payment_info; ?></a>
+                    <span class="emerchantpay-logo"><?php echo $text_payment_info; ?></span>
+                </a>
             </h4>
         </div>
         <div id="collapseOne" class="panel-collapse collapse in">
             <table class="table table-hover tree">
                 <thead>
-                <tr>
-                    <th><?php echo $text_transaction_id; ?></th>
-                    <th><?php echo $text_transaction_type; ?></th>
-                    <th><?php echo $text_transaction_timestamp; ?></th>
-                    <th><?php echo $text_transaction_amount; ?></th>
-                    <th><?php echo $text_transaction_status; ?></th>
-                    <th><?php echo $text_transaction_message; ?></th>
-                    <th><?php echo $text_transaction_mode; ?></th>
-                    <th><?php echo $text_transaction_action; ?></th>
-                    <th><?php echo $text_transaction_action; ?></th>
-                    <th><?php echo $text_transaction_action; ?></th>
-                </tr>
+                    <tr>
+                        <th><?php echo $text_transaction_id; ?></th>
+                        <th><?php echo $text_transaction_type; ?></th>
+                        <th><?php echo $text_transaction_timestamp; ?></th>
+                        <th><?php echo $text_transaction_amount; ?></th>
+                        <th><?php echo $text_transaction_status; ?></th>
+                        <th><?php echo $text_transaction_message; ?></th>
+                        <th><?php echo $text_transaction_mode; ?></th>
+                        <th><?php echo $text_transaction_action; ?></th>
+                        <th><?php echo $text_transaction_action; ?></th>
+                        <th><?php echo $text_transaction_action; ?></th>
+                    </tr>
                 </thead>
 
                 <tbody>
@@ -36,7 +56,7 @@
                             <td class="text-left">
                                 <?php echo $transaction['timestamp']; ?>
                             </td>
-                            <td class="text-left">
+                            <td class="text-right">
                                 <?php echo $transaction['amount']; ?>
                             </td>
                             <td class="text-left">
@@ -75,7 +95,20 @@
                             <td class="text-center">
                                 <?php if ($transaction['can_void']) { ?>
                                     <div class="transaction-action-button">
-                                        <a class="button btn btn-danger" id="button-void" role="button" data-type="void" data-reference-id="<?php echo $transaction['unique_id'];?>">
+                                        <a class="button btn btn-danger" id="button-void"
+                                            <?php if (!$emerchantpay_checkout_supports_void) { ?>
+                                                data-toggle="tooltip" data-placement="bottom" title="<?php echo $help_transaction_option_cancel_denied;?>"
+                                            <?php }
+                                            else if ($transaction['void_exists']) { ?>
+                                                data-toggle="tooltip" data-placement="bottom"
+                                                title="There is already an approved <strong>Cancel Transaction</strong> for <strong><?php echo ucfirst($transaction['type']);?> Transaction</strong> with Unique Id: <strong><?php echo $transaction['unique_id'];?></strong>"
+                                            <?php } ?>
+
+                                            <?php if (!$emerchantpay_checkout_supports_void || $transaction['void_exists']) { ?>
+                                                disabled="disabled"
+                                            <?php } ?>
+
+                                            role="button" data-type="void" data-reference-id="<?php echo $transaction['unique_id'];?>">
                                             <i class="fa fa-remove fa-lg"></i>
                                         </a>
                                         <span class="btn btn-primary" id="img_loading_void" style="display:none;">
@@ -91,15 +124,29 @@
         </div>
     </div>
 </div>
+
 <div class="modal fade" role="dialog"></div>
-<style>
-    .transaction-action-button { display:inline-block; }
-</style>
+
 <script type="text/javascript">
+    var modalPopupDecimalValueFormatConsts = {
+        decimalPlaces       : <?php echo $currency['decimalPlaces'];?>,
+        decimalSeparator    : "<?php echo $currency['decimalSeparator'];?>",
+        thousandSeparator   : "<?php echo $currency['thousandSeparator'];?>"
+    };
+    
+    (function($) {
+        jQuery.exists = function(selector) {
+        		return ($(selector).length > 0);
+        }
+    }(window.jQuery));
+    
     $("#button-capture, #button-refund, #button-void").click(function() {
+        if (jQuery(this).is('[disabled]'))
+            return ;
+
         $.ajax({
             url: '<?php echo $url_modal;?>',
-            type: 'POST',
+            type: 'post',
             data: {
                 'order_id'      : '<?php echo $order_id;?>',
                 'reference_id'  : jQuery(this).attr('data-reference-id'),
@@ -111,10 +158,107 @@
             }
         });
     });
+
     $(document).ready(function() {
-        $('.modal').on('hidden', function(){
-            console.log('CLOSEE');
+        $('.tree').treegrid({
+            expanderExpandedClass:  'treegrid-expander-expanded',
+            expanderCollapsedClass: 'treegrid-expander-collapsed'
         });
-        $('.tree').treegrid();
+        
+        var modalObj = $('.modal.fade');
+            		
+        modalObj.on('hide.bs.modal', function() {
+            destroyBootstrapValidator(modalObj);
+        });
+        
+        modalObj.on('shown.bs.modal', function() {
+            /* enable the submit button just in case (if the bootstrapValidator is enabled it will disable the button if necessary */
+            var transactionType = modalObj.find('.modal-dialog').attr('data-type');
+
+            if (transactionType !== 'void') {
+                $('.form-buttons button.btn-submit').removeAttr('disabled');
+
+
+                if (createBootstrapValidator('form.modal-form')) {
+                    executeBootstrapFieldValidator('form.modal-form', 'fieldAmount');
+                }
+            }
+        });
     });
+    
+    function destroyBootstrapValidator(submitForm) {
+        submitForm.bootstrapValidator('destroy');
+    }
+    
+    function createBootstrapValidator(submitFormSelector) {
+        var submitForm = $(submitFormSelector);
+        var transactionAmountControlSelector = '#<?php echo $module_name;?>_transaction_amount';
+        
+        var transactionAmount = formatTransactionAmount($(transactionAmountControlSelector).val());
+
+        destroyBootstrapValidator(submitForm);
+				
+        
+        var shouldCreateValidator = $.exists(transactionAmountControlSelector);
+        
+        /* it is not needed to create attach the bootstapValidator, when the field to validate is not visible (Void Transaction) */
+        if (!shouldCreateValidator) 
+            return false;
+						
+        submitForm.bootstrapValidator({
+        fields: {
+            fieldAmount: {
+                    selector: transactionAmountControlSelector,
+                    container: '#<?php echo $module_name;?>-amount-error-container',
+                    validators: {
+                        notEmpty: {
+                            message: 'The transaction amount is a required field!'
+                        },
+                        stringLength: {
+                                max: 10
+                        },
+                        greaterThan: {
+                                value: 0,
+                                inclusive: false
+                        },
+                        lessThan: {
+                                value: transactionAmount,
+                                inclusive: true
+                        }
+                    }
+                }
+            }
+        })
+        .on('error.field.bv', function(e, data) {
+            $('.form-buttons button.btn-submit').attr('disabled', 'disabled');
+        })
+        .on('success.field.bv', function(e) {
+            $('.form-buttons button.btn-submit').removeAttr('disabled');
+        })
+        .on('success.form.bv', function(e) {
+            e.preventDefault(); // Prevent the form from submitting
+						
+            /* submits the transaction form (No validators have failed) */
+            //submitForm.bootstrapValidator('defaultSubmit');
+        });
+        
+        return true;
+    }
+
+    function executeBootstrapFieldValidator(formSelector, validatorFieldName) {
+        var submitForm = $(formSelector);
+
+        submitForm.bootstrapValidator('validateField', validatorFieldName);
+        submitForm.bootstrapValidator('updateStatus', validatorFieldName, 'NOT_VALIDATED');
+    }
+    
+    function formatTransactionAmount(amount) {
+        if ((typeof amount == 'undefined') || (amount == null))
+                amount = 0;
+
+        return $.number(amount, modalPopupDecimalValueFormatConsts.decimalPlaces,
+                                modalPopupDecimalValueFormatConsts.decimalSeparator,
+                                modalPopupDecimalValueFormatConsts.thousandSeparator);
+    }
+    
 </script>
