@@ -1,331 +1,510 @@
 <?php
+/*
+ * Copyright (C) 2015 eMerchantPay Ltd.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * @author      eMerchantPay
+ * @copyright   2015 eMerchantPay Ltd.
+ * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
+ */
+
+/**
+ * Front-end model for the "eMerchantPay Checkout" module
+ *
+ * @package EMerchantPayCheckout
+ */
 class ModelPaymentEmerchantPayCheckout extends Model
 {
-	const REQUEST_AUTHORIZE         = 1;
-	const REQUEST_SALE              = 2;
-	const REQUEST_INIT_RECURRING    = 3;
+    /**
+     * Main method
+     *
+     * @param $address Order Address
+     * @param $total   Order Total
+     *
+     * @return array
+     */
+    public function getMethod($address, $total)
+    {
+        $this->load->language('payment/emerchantpay_checkout');
 
-	const REQUEST_AUTHORIZE_3D      = 11;
-	const REQUEST_SALE_3D           = 12;
-	const REQUEST_INIT_RECURRING_3D = 13;
+        $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('emerchantpay_checkout_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
 
-	/**
-	 * Main method
-	 *
-	 * @param $address Order Address
-	 * @param $total   Order Total
-	 *
-	 * @return array
-	 */
-	public function getMethod($address, $total) {
-		$this->load->language('payment/emerchantpay_checkout');
+        if ($this->config->get('emerchantpay_checkout_total') > 0 && $this->config->get('emerchantpay_checkout_total') > $total) {
+            $status = false;
+        } elseif (!$this->config->get('emerchantpay_checkout_geo_zone_id')) {
+            $status = true;
+        } elseif ($query->num_rows) {
+            $status = true;
+        } else {
+            $status = false;
+        }
 
-		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('emerchantpay_checkout_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
+        $method_data = array();
 
-		if ($this->config->get('emerchantpay_checkout_total') > 0 && $this->config->get('emerchantpay_checkout_total') > $total) {
-			$status = false;
-		} elseif (!$this->config->get('emerchantpay_checkout_geo_zone_id')) {
-			$status = true;
-		} elseif ($query->num_rows) {
-			$status = true;
-		} else {
-			$status = false;
-		}
+        if ($status) {
+            $method_data = array(
+                'code'       => 'emerchantpay_checkout',
+                'title'      => $this->language->get('text_title'),
+                'terms'      => '',
+                'sort_order' => $this->config->get('emerchantpay_checkout_sort_order')
+            );
+        }
 
-		$method_data = array();
+        return $method_data;
+    }
 
-		if ($status) {
-			$method_data = array(
-				'code'       => 'emerchantpay_checkout',
-				'title'      => $this->language->get('text_title'),
-				'terms'      => '',
-				'sort_order' => $this->config->get('emerchantpay_checkout_sort_order')
-			);
-		}
+    /**
+     * Get saved transaction (from DB) by id
+     *
+     * @param $unique_id
+     *
+     * @return bool|mixed
+     */
+    public function getTransactionById($unique_id)
+    {
+        if (isset($unique_id) && !empty($unique_id)) {
+            $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_checkout_transactions` WHERE `unique_id` = '" . $this->db->escape($unique_id) . "' LIMIT 1");
 
-		return $method_data;
-	}
+            if ($query->num_rows) {
+                return reset($query->rows);
+            }
+        }
 
-	/**
-	 * Get saved transaction (from DB) by id
-	 *
-	 * @param $unique_id
-	 *
-	 * @return bool|mixed
-	 */
-	public function getTransactionById($unique_id) {
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_checkout_transactions` WHERE `unique_id` = '" . $this->db->escape($unique_id) . "' LIMIT 1");
+        return false;
+    }
 
-		if ($query->num_rows) {
-			return reset($query->rows);
-		}
+    /**
+     * Add transaction to the database
+     *
+     * @param $data array
+     */
+    public function addTransaction($data)
+    {
+        try {
+            $fields = implode(', ', array_map(
+                                      function ($v, $k) {
+                                          return sprintf('`%s`', $k);
+                                      },
+                                      $data,
+                                      array_keys($data)
+                                  )
+            );
 
-		return false;
-	}
+            $values = implode(', ', array_map(
+                                      function ($v) {
+                                          return sprintf("'%s'", $v);
+                                      },
+                                      $data,
+                                      array_keys($data)
+                                  )
+            );
 
-	/**
-	 * Add transaction to the database
-	 *
-	 * @param $data array
-	 */
-	public function addTransaction($data) {
-		try {
-			foreach($data as $column => &$value) {
-				$value = $this->db->escape($value);
-			}
-
-			$this->db->query("
+            $this->db->query("
 				INSERT INTO
+					`" . DB_PREFIX . "emerchantpay_checkout_transactions` (" . $fields . ")
+				VALUES
+					(" . $values . ")
+			");
+        } catch (Exception $exception) {
+            $this->logEx($exception);
+        }
+    }
+
+    /**
+     * Update existing transaction in the database
+     *
+     * @param $data array
+     */
+    public function updateTransaction($data)
+    {
+        try {
+            $fields = implode(', ', array_map(
+                                      function ($v, $k) {
+                                          return sprintf("`%s` = '%s'", $k, $v);
+                                      },
+                                      $data,
+                                      array_keys($data)
+                                  )
+            );
+
+            $this->db->query("
+				UPDATE
 					`" . DB_PREFIX . "emerchantpay_checkout_transactions`
 				SET
-					`unique_id` = '" . $data['unique_id'] . "',
-					`reference_id` = '" . $data['reference_id'] . "',
-					`order_id`  = '" . $data['order_id'] . "',
-					`type` = '" . $data['type'] . "',
-					`mode` = '" . $data['mode'] . "',
-					`timestamp` = '" . $data['timestamp'] . "',
-					`status` = '" . $data['status'] . "',
-					`message` = '" . $data['message'] . "',
-					`technical_message` = '" . $data['technical_message'] . "',
-					`amount` = '" . $data['amount'] . "',
-					`currency` = '" . $data['currency'] . "';
+					" . $fields . "
+				WHERE
+				    `unique_id` = '" . $data['unique_id'] . "'
 			");
-		}
-		catch (Exception $exception) {
-			$this->logEx($exception);
-		}
-	}
+        } catch (Exception $exception) {
+            $this->logEx($exception);
+        }
+    }
 
-	/**
-	 * Send transaction to Genesis
-	 *
-	 * @param $data array Transaction Data
-	 *
-	 * @return mixed
-	 */
-	public function create($data) {
-		try {
-			$this->bootstrap();
+    /**
+     * Sanitize transaction data and check
+     * whether an UPDATE or INSERT is required
+     *
+     * @param array $data
+     */
+    public function populateTransaction($data = array())
+    {
+        try {
+            $self = $this;
 
-			$genesis = new \Genesis\Genesis('WPF\Create');
+            // Sanitize the input data
+            array_walk($data, function (&$column, &$value) use ($self) {
+                $column = $self->db->escape($column);
+                $value  = $self->db->escape($value);
+            });
 
-			$genesis
-				->request()
-					->setTransactionId($data['transaction_id'])
-					->setRemoteIp($data['remote_address'])
+            // Check if transaction exists
+            $insertQuery = $this->db->query("
+				SELECT
+					*
+				FROM
+					`" . DB_PREFIX . "emerchantpay_checkout_transactions`
+				WHERE
+					`unique_id` = '" . $data['unique_id'] . "'
+			");
 
-					// Financial
-					->setCurrency($data['currency'])
-					->setAmount($data['amount'])
+            if ($insertQuery->rows) {
+                $this->updateTransaction($data);
+            } else {
+                $this->addTransaction($data);
+            }
+        } catch (Exception $exception) {
+            $this->logEx($exception);
+        }
+    }
 
-					->setUsage('USSAGE')
-					->setDescription('DESC')
+    /**
+     * Send transaction to Genesis
+     *
+     * @param $data array Transaction Data
+     * @return mixed
+     * @throws Exception
+     * @throws \Genesis\Exceptions\ErrorAPI
+     */
+    public function create($data)
+    {
+        try {
+            $this->bootstrap();
 
-					// Personal
-					->setCustomerEmail($data['customer_email'])
-					->setCustomerPhone($data['customer_phone'])
+            $genesis = new \Genesis\Genesis('WPF\Create');
 
-					// URL
-					->setNotificationUrl($data['notification_url'])
-					->setReturnSuccessUrl($data['return_success_url'])
-					->setReturnFailureUrl($data['return_failure_url'])
-					->setReturnCancelUrl($data['return_cancel_url'])
+            $genesis
+                ->request()
+                    ->setTransactionId($data['transaction_id'])
+                    ->setRemoteIp($data['remote_address'])
+                    // Financial
+                    ->setCurrency($data['currency'])
+                    ->setAmount($data['amount'])
+                    ->setUsage($data['usage'])
+                    ->setDescription($data['description'])
+                    // Personal
+                    ->setCustomerEmail($data['customer_email'])
+                    ->setCustomerPhone($data['customer_phone'])
+                    // URL
+                    ->setNotificationUrl($data['notification_url'])
+                    ->setReturnSuccessUrl($data['return_success_url'])
+                    ->setReturnFailureUrl($data['return_failure_url'])
+                    ->setReturnCancelUrl($data['return_cancel_url'])
+                    // Billing
+                    ->setBillingFirstName($data['billing']['first_name'])
+                    ->setBillingLastName($data['billing']['last_name'])
+                    ->setBillingAddress1($data['billing']['address1'])
+                    ->setBillingAddress2($data['billing']['address2'])
+                    ->setBillingZipCode($data['billing']['zip'])
+                    ->setBillingCity($data['billing']['city'])
+                    ->setBillingState($data['billing']['state'])
+                    ->setBillingCountry($data['billing']['country'])
+                    // Shipping
+                    ->setShippingFirstName($data['shipping']['first_name'])
+                    ->setShippingLastName($data['shipping']['last_name'])
+                    ->setShippingAddress1($data['shipping']['address1'])
+                    ->setShippingAddress2($data['shipping']['address2'])
+                    ->setShippingZipCode($data['shipping']['zip'])
+                    ->setShippingCity($data['shipping']['city'])
+                    ->setShippingState($data['shipping']['state'])
+                    ->setShippingCountry($data['shipping']['country'])
+                    ->setLanguage($data['language']);
 
-					// Billing
-					->setBillingFirstName($data['billing']['first_name'])
-					->setBillingLastName($data['billing']['last_name'])
-					->setBillingAddress1($data['billing']['address1'])
-					->setBillingAddress2($data['billing']['address2'])
-					->setBillingZipCode($data['billing']['zip'])
-					->setBillingCity($data['billing']['city'])
-					->setBillingState($data['billing']['state'])
-					->setBillingCountry($data['billing']['country'])
+            foreach ($this->getTransactionTypes() as $type) {
+                if (is_array($type)) {
+                    $genesis
+                        ->request()
+                            ->addTransactionType($type['name'], $type['parameters']);
+                } else {
+                    $genesis
+                        ->request()
+                            ->addTransactionType($type);
+                }
+            }
 
-					// Shipping
-					->setShippingFirstName($data['shipping']['first_name'])
-					->setShippingLastName($data['shipping']['last_name'])
-					->setShippingAddress1($data['shipping']['address1'])
-					->setShippingAddress2($data['shipping']['address2'])
-					->setShippingZipCode($data['shipping']['zip'])
-					->setShippingCity($data['shipping']['city'])
-					->setShippingState($data['shipping']['state'])
-					->setShippingCountry($data['shipping']['country']);
+            $genesis->execute();
 
-			if (is_array($this->config->get('emerchantpay_checkout_transaction_type'))) {
-				$transaction_types = $this->config->get('emerchantpay_checkout_transaction_type');
+            return $genesis->response()->getResponseObject();
+        } catch (\Genesis\Exceptions\ErrorAPI $api) {
+            throw $api;
+        } catch (\Exception $exception) {
+            $this->logEx($exception);
 
-				foreach ($transaction_types as $type) {
-					$genesis->request()->addTransactionType($this->getTrxTypeById($type));
-				}
-			}
+            return false;
+        }
+    }
 
-			$genesis->execute();
+    /**
+     * Genesis Request - Reconcile
+     *
+     * @param $unique_id string - Id of a Genesis Transaction
+     * @return mixed
+     * @throws Exception
+     * @throws \Genesis\Exceptions\ErrorAPI
+     */
+    public function reconcile($unique_id)
+    {
+        try {
+            $this->bootstrap();
 
-			if ($genesis->response()->isSuccessful()) {
-				$response = array(
-					'error'     => false,
-					'message'   => strval($genesis->response()->getResponseObject()->message),
-					'response'  => $genesis->response()->getResponseObject()
-				);
-			}
-			else {
-				$response = array(
-					'error'     => true,
-					'message'   => strval($genesis->response()->getResponseObject()->message)
-				);
-			}
+            $genesis = new \Genesis\Genesis('WPF\Reconcile');
 
-			return (object)$response;
-		}
-		catch (Exception $exception) {
-			$this->logEx($exception);
-		}
-	}
+            $genesis->request()->setUniqueId($unique_id);
 
-	/**
-	 * Genesis Request - Reconcile
-	 *
-	 * @param $unique_id string - Id of a Genesis Transaction
-	 *
-	 * @return mixed
-	 */
-	public function reconcile($unique_id) {
-		try {
-			$this->bootstrap();
+            $genesis->execute();
 
-			$genesis = new \Genesis\Genesis('WPF\Reconcile');
+            return $genesis->response()->getResponseObject();
+        } catch (\Genesis\Exceptions\ErrorAPI $api) {
+            throw $api;
+        } catch (\Exception $exception) {
+            $this->logEx($exception);
 
-			$genesis->request()->setUniqueId($unique_id);
+            return false;
+        }
+    }
 
-			$genesis->execute();
+    /**
+     * Bootstrap Genesis Library
+     *
+     * @return void
+     */
+    public function bootstrap()
+    {
+        // Look for, but DO NOT try to load via Auto-loader magic methods
+        if (!class_exists('\Genesis\Genesis', false)) {
+            include DIR_APPLICATION . '/../admin/model/payment/emerchantpay/genesis/vendor/autoload.php';
 
-			$response = array(
-				'message'   => strval($genesis->response()->getResponseObject()->message),
-				'response'  => $genesis->response()->getResponseObject()
-			);
+            \Genesis\Config::setEndpoint(
+                \Genesis\API\Constants\Endpoints::EMERCHANTPAY
+            );
 
-			return (object)$response;
-		}
-		catch (Exception $exception) {
-			$this->logEx($exception);
-		}
-	}
+            \Genesis\Config::setUsername(
+                $this->config->get('emerchantpay_checkout_username')
+            );
 
-	public function getTrxTypeById($trx_type_id) {
-		$type = '';
+            \Genesis\Config::setPassword(
+                $this->config->get('emerchantpay_checkout_password')
+            );
 
-		switch(intval($trx_type_id)) {
-			case 1:
-				$type = 'authorize';
-				break;
-			case 11:
-				$type = 'authorize3d';
-				break;
-			case 2:
-				$type = 'sale';
-				break;
-			case 12:
-				$type = 'sale3d';
-				break;
-		}
+            \Genesis\Config::setEnvironment(
+                $this->config->get('emerchantpay_checkout_sandbox')
+                    ? \Genesis\API\Constants\Environments::STAGING
+                    : \Genesis\API\Constants\Environments::PRODUCTION
+            );
+        }
+    }
 
-		return $type;
-	}
+    /**
+     * Generate Transaction Id based on the order id
+     * and salted to avoid duplication
+     *
+     * @param string $prefix
+     *
+     * @return string
+     */
+    public function genTransactionId($prefix = '')
+    {
+        $hash = md5(microtime(true) . uniqid() . mt_rand(PHP_INT_SIZE, PHP_INT_MAX));
 
-	/**
-	 * Convert ISO-4217 to float
-	 *
-	 * @param $amount
-	 * @param $currency
-	 *
-	 * @return mixed
-	 */
-	public function convertCurrency($amount, $currency) {
-		$this->bootstrap();
+        return (string)$prefix . substr($hash, -(strlen($hash) - strlen($prefix)));
+    }
 
-		return \Genesis\Utils\Currency::exponentToReal($amount, $currency);
-	}
+    /**
+     * Get the current front-end language
+     *
+     * @return string
+     */
+    public function getLanguage()
+    {
+        $language = isset($this->session->data['language'])
+            ? $this->session->data['language']
+            : $this->config->get('config_language');
 
-	/**
-	 * Bootstrap Genesis Library
-	 *
-	 * @return void
-	 */
-	public function bootstrap() {
-		// Look for, but DO NOT try to load via Autoloader magic methods
-		if (!class_exists('\Genesis\Genesis', false)) {
-			include DIR_APPLICATION . '/model/payment/libraries/genesis_php/vendor/autoload.php';
+        $language_code = substr($language, 0, 2);
 
-			$environment = ( intval( $this->config->get( 'emerchantpay_checkout_sandbox' ) ) == 1 ? 'sandbox' : 'production' );
+        $this->bootstrap();
 
-			\Genesis\GenesisConfig::setUsername( $this->config->get( 'emerchantpay_checkout_username' ) );
-			\Genesis\GenesisConfig::setPassword( $this->config->get( 'emerchantpay_checkout_password' ) );
-			\Genesis\GenesisConfig::setToken( $this->config->get( 'emerchantpay_checkout_token' ) );
+        $isAvailable = @constant('\Genesis\API\Constants\i18n::' . strtoupper($language_code));
 
-			\Genesis\GenesisConfig::setEnvironment( $environment );
-		}
-	}
+        if ($isAvailable) {
+            return strtolower($language_code);
+        } else {
+            return 'en';
+        }
+    }
 
-	/**
-	 * Log Exception to a log file, if enabled
-	 *
-	 * @param $exception
-	 */
-	public function logEx($exception) {
-		if ($this->config->get('emerchantpay_checkout_debug')) {
-			$log = new Log('emerchantpay_checkout.log');
-			$log->write($this->jTraceEx($exception));
-		}
-	}
+    /**
+     * Get a description-formatted list of products
+     * inside an order
+     *
+     * @param $order_id
+     * @return string
+     */
+    public function getOrderProducts($order_id)
+    {
+        $order_product_query = $this->db->query("
+            SELECT
+                *
+            FROM
+                " . DB_PREFIX . "order_product
+            WHERE
+                order_id = '" . abs((int)$order_id) . "'
+            ");
 
-	/**
-	 * jTraceEx() - provide a Java style exception trace
-	 * @param $e Exception
-	 * @param $seen      - array passed to recursive calls to accumulate trace lines already seen
-	 *                     leave as NULL when calling this function
-	 * @return array of strings, one entry per trace line
-	 */
-	private function jTraceEx($e, $seen=null) {
-		$starter = $seen ? 'Caused by: ' : '';
-		$result = array();
+        $description = '';
 
-		if (!$seen) $seen = array();
+        foreach ($order_product_query->rows as $order_product) {
+            $description .= sprintf("%s (%s) x %d\r\n", $order_product['name'], $order_product['model'], $order_product['quantity']);
+        }
 
-		$trace  = $e->getTrace();
-		$prev   = $e->getPrevious();
+        return $description;
+    }
 
-		$result[] = sprintf('%s%s: %s', $starter, get_class($e), $e->getMessage());
+    /**
+     * Get the selected transaction types in array
+     *
+     * @return array
+     */
+    public function getTransactionTypes()
+    {
+        $processed_list = array();
 
-		$file = $e->getFile();
-		$line = $e->getLine();
+        $selected_types = $this->config->get('emerchantpay_checkout_transaction_type');
 
-		while (true) {
-			$current = "$file:$line";
-			if (is_array($seen) && in_array($current, $seen)) {
-				$result[] = sprintf(' ... %d more', count($trace)+1);
-				break;
-			}
-			$result[] = sprintf(' at %s%s%s(%s%s%s)',
-				count($trace) && array_key_exists('class', $trace[0]) ? str_replace('\\', '.', $trace[0]['class']) : '',
-				count($trace) && array_key_exists('class', $trace[0]) && array_key_exists('function', $trace[0]) ? '.' : '',
-				count($trace) && array_key_exists('function', $trace[0]) ? str_replace('\\', '.', $trace[0]['function']) : '(main)',
-				$line === null ? $file : basename($file),
-				$line === null ? '' : ':',
-				$line === null ? '' : $line);
-			if (is_array($seen))
-				$seen[] = "$file:$line";
-			if (!count($trace))
-				break;
-			$file = array_key_exists('file', $trace[0]) ? $trace[0]['file'] : 'Unknown Source';
-			$line = array_key_exists('file', $trace[0]) && array_key_exists('line', $trace[0]) && $trace[0]['line'] ? $trace[0]['line'] : null;
-			array_shift($trace);
-		}
+        $alias_map = array(
+            \Genesis\API\Constants\Payment\Methods::EPS         =>
+                \Genesis\API\Constants\Transaction\Types::PPRO,
+            \Genesis\API\Constants\Payment\Methods::GIRO_PAY    =>
+                \Genesis\API\Constants\Transaction\Types::PPRO,
+            \Genesis\API\Constants\Payment\Methods::PRZELEWY24  =>
+                \Genesis\API\Constants\Transaction\Types::PPRO,
+            \Genesis\API\Constants\Payment\Methods::QIWI        =>
+                \Genesis\API\Constants\Transaction\Types::PPRO,
+            \Genesis\API\Constants\Payment\Methods::SAFETY_PAY  =>
+                \Genesis\API\Constants\Transaction\Types::PPRO,
+            \Genesis\API\Constants\Payment\Methods::TELEINGRESO =>
+                \Genesis\API\Constants\Transaction\Types::PPRO,
+            \Genesis\API\Constants\Payment\Methods::TRUST_PAY   =>
+                \Genesis\API\Constants\Transaction\Types::PPRO,
+        );
 
-		$result = join("\n", $result);
+        foreach ($selected_types as $selected_type) {
+            if (array_key_exists($selected_type, $alias_map)) {
+                $transaction_type = $alias_map[$selected_type];
 
-		if ($prev)
-			$result  .= "\n" . $this->jTraceEx($prev, $seen);
+                $processed_list[$transaction_type]['name'] = $transaction_type;
 
-		return $result;
-	}
+                $processed_list[$transaction_type]['parameters'][] = array(
+                    'payment_method' => $selected_type
+                );
+            } else {
+                $processed_list[] = $selected_type;
+            }
+        }
+
+        return $processed_list;
+    }
+
+    /**
+     * Get a Usage string with the Store Name
+     *
+     * @return string
+     */
+    public function getUsage()
+    {
+        return sprintf('%s checkout transaction', $this->config->get('config_name'));
+    }
+
+    /**
+     * Log Exception to a log file, if enabled
+     *
+     * @param $exception
+     */
+    public function logEx($exception)
+    {
+        if ($this->config->get('emerchantpay_checkout_debug')) {
+            $log = new Log('emerchantpay_checkout.log');
+            $log->write($this->jTraceEx($exception));
+        }
+    }
+
+    /**
+     * jTraceEx() - provide a Java style exception trace
+     * @param $e Exception
+     * @param $seen - array passed to recursive calls to accumulate trace lines already seen
+     *                     leave as NULL when calling this function
+     * @return array of strings, one entry per trace line
+     */
+    private function jTraceEx($e, $seen = null)
+    {
+        $starter = $seen ? 'Caused by: ' : '';
+        $result  = array();
+
+        if (!$seen) $seen = array();
+
+        $trace = $e->getTrace();
+        $prev  = $e->getPrevious();
+
+        $result[] = sprintf('%s%s: %s', $starter, get_class($e), $e->getMessage());
+
+        $file = $e->getFile();
+        $line = $e->getLine();
+
+        while (true) {
+            $current = "$file:$line";
+            if (is_array($seen) && in_array($current, $seen)) {
+                $result[] = sprintf(' ... %d more', count($trace) + 1);
+                break;
+            }
+            $result[] = sprintf(' at %s%s%s(%s%s%s)',
+                                count($trace) && array_key_exists('class', $trace[0]) ? str_replace('\\', '.', $trace[0]['class']) : '',
+                                count($trace) && array_key_exists('class', $trace[0]) && array_key_exists('function', $trace[0]) ? '.' : '',
+                                count($trace) && array_key_exists('function', $trace[0]) ? str_replace('\\', '.', $trace[0]['function']) : '(main)',
+                                $line === null ? $file : basename($file),
+                                $line === null ? '' : ':',
+                                $line === null ? '' : $line);
+            if (is_array($seen))
+                $seen[] = "$file:$line";
+            if (!count($trace))
+                break;
+            $file = array_key_exists('file', $trace[0]) ? $trace[0]['file'] : 'Unknown Source';
+            $line = array_key_exists('file', $trace[0]) && array_key_exists('line', $trace[0]) && $trace[0]['line'] ? $trace[0]['line'] : null;
+            array_shift($trace);
+        }
+
+        $result = join("\n", $result);
+
+        if ($prev)
+            $result .= "\n" . $this->jTraceEx($prev, $seen);
+
+        return $result;
+    }
 }
