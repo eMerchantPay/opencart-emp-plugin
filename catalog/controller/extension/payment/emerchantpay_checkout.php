@@ -17,31 +17,16 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
-if (!class_exists('ControllerPaymentEmerchantPayBase')) {
-    require_once DIR_APPLICATION . "controller/payment/emerchantpay/base_controller.php";
+if (!class_exists('ControllerPaymentEmerchantPayCheckout')) {
+    require_once DIR_APPLICATION . 'controller/payment/emerchantpay_checkout.php';
 }
 
 /**
- * Backend controller for the "eMerchantPay Checkout" module
+ * Front-end controller for the "eMerchantPay Direct" module (2.3.x and above)
  *
- * @package EMerchantPayCheckout
+ * @package EMerchantPayDirect
  */
-class ControllerPaymentEmerchantPayCheckout extends ControllerPaymentEmerchantPayBase
+class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerPaymentEmerchantPayCheckout
 {
-    /**
-     * Module Name (Used in View - Templates)
-     *
-     * @var string
-     */
-    protected $module_name = 'emerchantpay_checkout';
 
-    /**
-     * Used to find out if the payment method requires SSL
-     *
-     * @return bool
-     */
-    protected function getModuleRequiresSSL()
-    {
-        return false;
-    }
 }

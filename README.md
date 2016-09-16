@@ -6,7 +6,7 @@ This is a Payment Module for OpenCart, that gives you the ability to process pay
 Requirements
 ------------
 
-* OpenCart 2.0.X - 2.2.X (due to architectural changes, this module is __incompatible__ with aOpenCart 1.X)
+* OpenCart 2.0.X - 2.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X)
 * [GenesisPHP v1.4](https://github.com/GenesisGateway/genesis_php) - (Integrated in Module)
 * PCI-certified server in order to use ```eMerchantPay Direct```
 

@@ -52,6 +52,8 @@
             <div class="panel-heading">
                 <h3 class="panel-title">
                     <i class="fa fa-pencil"></i>&nbsp;<?php echo $text_edit; ?>
+                    &nbsp;
+                    <strong>(v. <?php echo $module_version;?>)</strong>
                 </h3>
             </div>
             <div class="panel-body">
@@ -198,7 +200,7 @@
                     <div class="form-group">
                         <label class="col-sm-2 control-label" for="input-order-status">
                             <span data-toggle="tooltip" title="<?php echo $help_failure_order_status; ?>">
-                                <?php echo $entry_failure_order_status; ?>
+                                <?php echo $entry_order_status_failure; ?>
                             </span>
                         </label>
                         <div class="col-sm-10">

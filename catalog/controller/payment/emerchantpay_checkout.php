@@ -32,8 +32,6 @@ class ControllerPaymentEmerchantPayCheckout extends Controller
     public function __construct($registry)
     {
         parent::__construct($registry);
-
-        $this->isUserLoggedIn();
     }
 
     /**
@@ -135,7 +133,6 @@ class ControllerPaymentEmerchantPayCheckout extends Controller
                     'reference_id'      => '0',
                     'order_id'          => $order_info['order_id'],
                     'unique_id'         => $transaction->unique_id,
-                    'mode'              => $transaction->mode,
                     'status'            => $transaction->status,
                     'amount'            => $transaction->amount,
                     'currency'          => $transaction->currency,

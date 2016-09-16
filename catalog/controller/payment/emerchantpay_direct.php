@@ -32,8 +32,6 @@ class ControllerPaymentEmerchantPayDirect extends Controller
     public function __construct($registry)
     {
         parent::__construct($registry);
-
-        $this->isUserLoggedIn();
     }
 
     /**
@@ -196,7 +194,6 @@ class ControllerPaymentEmerchantPayDirect extends Controller
                     'order_id'          => $order_info['order_id'],
                     'unique_id'         => $transaction->unique_id,
                     'type'              => $transaction->transaction_type,
-                    'mode'              => $transaction->mode,
                     'status'            => $transaction->status,
                     'message'           => $transaction->message,
                     'technical_message' => $transaction->technical_message,

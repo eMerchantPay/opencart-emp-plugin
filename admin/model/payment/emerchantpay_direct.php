@@ -25,6 +25,14 @@
 class ModelPaymentEmerchantPayDirect extends Model
 {
     /**
+     * Holds the current module version
+     * Will be displayed on Admin Settings Form
+     *
+     * @var string
+     */
+    protected $module_version = "1.3.0";
+
+    /**
      * Perform installation logic
      *
      * @return void
@@ -511,5 +519,15 @@ class ModelPaymentEmerchantPayDirect extends Model
             $result .= "\n" . $this->jTraceEx($prev, $seen);
 
         return $result;
+    }
+
+    /**
+     * Retrieves the Module Method Version
+     *
+     * @return string
+     */
+    public function getVersion()
+    {
+        return $this->module_version;
     }
 }
