@@ -18,7 +18,7 @@
  */
 
 if (!class_exists('ControllerPaymentEmerchantPayBase')) {
-    require_once DIR_APPLICATION . "controller/payment/emerchantpay/base_controller.php";
+	require_once DIR_APPLICATION . "controller/payment/emerchantpay/base_controller.php";
 }
 
 /**
@@ -28,46 +28,46 @@ if (!class_exists('ControllerPaymentEmerchantPayBase')) {
  */
 class ControllerPaymentEmerchantPayDirect extends ControllerPaymentEmerchantPayBase
 {
-    /**
-     * Module Name (Used in View - Templates)
-     *
-     * @var string
-     */
-    protected $module_name = 'emerchantpay_direct';
+	/**
+	 * Module Name (Used in View - Templates)
+	 *
+	 * @var string
+	 */
+	protected $module_name = 'emerchantpay_direct';
 
-    /**
-     * Used to find out if the payment method requires SSL
-     *
-     * @return bool
-     */
-    protected function getModuleRequiresSSL()
-    {
-        return true;
-    }
+	/**
+	 * Used to find out if the payment method requires SSL
+	 *
+	 * @return bool
+	 */
+	protected function isModuleRequiresSsl()
+	{
+		return true;
+	}
 
-    /**
-     * ControllerPaymentEmerchantPayDirect constructor.
-     * @param $registry
-     */
-    public function __construct($registry)
-    {
-        parent::__construct($registry);
-        array_push($this->errorFieldKeyList, 'token');
-    }
+	/**
+	 * ControllerPaymentEmerchantPayDirect constructor.
+	 * @param $registry
+	 */
+	public function __construct($registry)
+	{
+		parent::__construct($registry);
+		array_push($this->error_field_key_list, 'token');
+	}
 
-    /**
-     * Ensure that the current user has permissions to see/modify this module
-     *
-     * @return bool
-     */
-    protected function validate()
-    {
-        parent::validate();
+	/**
+	 * Ensure that the current user has permissions to see/modify this module
+	 *
+	 * @return bool
+	 */
+	protected function validate()
+	{
+		parent::validate();
 
-        if (@empty($this->request->post["{$this->module_name}_token"])) {
-            $this->error['token'] = $this->language->get('error_token');
-        }
+		if (@empty($this->request->post["{$this->module_name}_token"])) {
+			$this->error['token'] = $this->language->get('error_token');
+		}
 
-        return !$this->error;
-    }
+		return !$this->error;
+	}
 }

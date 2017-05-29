@@ -17,110 +17,119 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+require_once DIR_APPLICATION . 'model/payment/emerchantpay/base_model.php';
+
 /**
  * Front-end model for the "eMerchantPay Direct" module
  *
  * @package EMerchantPayDirect
  */
-class ModelPaymentEmerchantPayDirect extends Model
+class ModelPaymentEmerchantPayDirect extends ModelPaymentEmerchantPayBase
 {
-    /**
-     * Main method
-     *
-     * @param $address Order Address
-     * @param $total   Order Total
-     *
-     * @return array
-     */
-    public function getMethod($address, $total)
-    {
-        $this->load->language('payment/emerchantpay_direct');
+	/**
+	 * Module Name
+	 *
+	 * @var string
+	 */
+	protected $module_name = 'emerchantpay_direct';
 
-        $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('emerchantpay_direct_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
+	/**
+	 * Main method
+	 *
+	 * @param $address Order Address
+	 * @param $total   Order Total
+	 *
+	 * @return array
+	 */
+	public function getMethod($address, $total)
+	{
+		$this->load->language('payment/emerchantpay_direct');
 
-        if ($this->config->get('emerchantpay_direct_total') > 0 && $this->config->get('emerchantpay_direct_total') > $total) {
-            $status = false;
-        } elseif (!$this->config->get('emerchantpay_direct_geo_zone_id')) {
-            $status = true;
-        } elseif ($query->num_rows) {
-            $status = true;
-        } else {
-            $status = false;
-        }
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('emerchantpay_direct_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
 
-        if (!$this->isSecureConnection()) {
-            $status = false;
-        }
+		if ($this->config->get('emerchantpay_direct_total') > 0 && $this->config->get('emerchantpay_direct_total') > $total) {
+			$status = false;
+		} elseif (!$this->config->get('emerchantpay_direct_geo_zone_id')) {
+			$status = true;
+		} elseif ($query->num_rows) {
+			$status = true;
+		} else {
+			$status = false;
+		}
 
-        $method_data = array();
+		if (!$this->isSecureConnection()) {
+			$status = false;
+		}
 
-        if ($status) {
-            $method_data = array(
-                'code'       => 'emerchantpay_direct',
-                'title'      => $this->language->get('text_title'),
-                'terms'      => '',
-                'sort_order' => $this->config->get('emerchantpay_direct_sort_order')
-            );
-        }
+		$method_data = array();
 
-        return $method_data;
-    }
+		if ($status) {
+			$method_data = array(
+				'code'       => 'emerchantpay_direct',
+				'title'      => $this->language->get('text_title'),
+				'terms'      => '',
+				'sort_order' => $this->config->get('emerchantpay_direct_sort_order')
+			);
+		}
 
-    /**
-     * Add transaction to the database
-     *
-     * @param $data array
-     */
-    public function addTransaction($data)
-    {
-        try {
-            $fields = implode(', ', array_map(
-                                      function ($v, $k) {
-                                          return sprintf('`%s`', $k);
-                                      },
-                                      $data,
-                                      array_keys($data)
-                                  )
-            );
+		return $method_data;
+	}
 
-            $values = implode(', ', array_map(
-                                      function ($v) {
-                                          return sprintf("'%s'", $v);
-                                      },
-                                      $data,
-                                      array_keys($data)
-                                  )
-            );
+	/**
+	 * Add transaction to the database
+	 *
+	 * @param $data array
+	 */
+	public function addTransaction($data)
+	{
+		try {
+			$fields = implode(', ', array_map(
+					function ($value, $key) {
+						return sprintf('`%s`', $key);
+					},
+					$data,
+					array_keys($data)
+				)
+			);
 
-            $this->db->query("
+			$values = implode(', ', array_map(
+					function ($value) {
+						return sprintf("'%s'", $value);
+					},
+					$data,
+					array_keys($data)
+				)
+			);
+
+			$this->db->query("
 				INSERT INTO
 					`" . DB_PREFIX . "emerchantpay_direct_transactions` (" . $fields . ")
 				VALUES
 					(" . $values . ")
 			");
-        } catch (Exception $exception) {
-            $this->logEx($exception);
-        }
-    }
+		} catch (Exception $exception) {
+			$this->logEx($exception);
+		}
+	}
 
-    /**
-     * Update existing transaction in the database
-     *
-     * @param $data array
-     */
-    public function updateTransaction($data)
-    {
-        try {
-            $fields = implode(', ', array_map(
-                                      function ($v, $k) {
-                                          return sprintf("`%s` = '%s'", $k, $v);
-                                      },
-                                      $data,
-                                      array_keys($data)
-                                  )
-            );
+	/**
+	 * Update existing transaction in the database
+	 *
+	 * @param $data array
+	 */
+	public function updateTransaction($data)
+	{
+		try {
+			$fields = implode(', ', array_map(
+					function ($value, $key) {
+						return sprintf("`%s` = '%s'", $key, $value);
+					},
+					$data,
+					array_keys($data)
+				)
+			);
 
-            $this->db->query("
+			$this->db->query("
 				UPDATE
 					`" . DB_PREFIX . "emerchantpay_direct_transactions`
 				SET
@@ -128,30 +137,30 @@ class ModelPaymentEmerchantPayDirect extends Model
 				WHERE
 				    `unique_id` = '" . $data['unique_id'] . "'
 			");
-        } catch (Exception $exception) {
-            $this->logEx($exception);
-        }
-    }
+		} catch (Exception $exception) {
+			$this->logEx($exception);
+		}
+	}
 
-    /**
-     * Sanitize transaction data and check
-     * whether an UPDATE or INSERT is required
-     *
-     * @param array $data
-     */
-    public function populateTransaction($data = array())
-    {
-        try {
-            $self = $this;
+	/**
+	 * Sanitize transaction data and check
+	 * whether an UPDATE or INSERT is required
+	 *
+	 * @param array $data
+	 */
+	public function populateTransaction($data = array())
+	{
+		try {
+			$self = $this;
 
-            // Sanitize the input data
-            array_walk($data, function (&$column, &$value) use ($self) {
-                $column = $self->db->escape($column);
-                $value  = $self->db->escape($value);
-            });
+			// Sanitize the input data
+			array_walk($data, function (&$column, &$value) use ($self) {
+				$column = $self->db->escape($column);
+				$value  = $self->db->escape($value);
+			});
 
-            // Check if transaction exists
-            $insertQuery = $this->db->query("
+			// Check if transaction exists
+			$insert_query = $this->db->query("
                 SELECT
                     *
                 FROM
@@ -160,270 +169,258 @@ class ModelPaymentEmerchantPayDirect extends Model
                     `unique_id` = '" . $data['unique_id'] . "'
             ");
 
-            if ($insertQuery->rows) {
-                $this->updateTransaction($data);
-            } else {
-                $this->addTransaction($data);
-            }
-        } catch (Exception $exception) {
-            $this->logEx($exception);
-        }
-    }
+			if ($insert_query->rows) {
+				$this->updateTransaction($data);
+			} else {
+				$this->addTransaction($data);
+			}
+		} catch (Exception $exception) {
+			$this->logEx($exception);
+		}
+	}
 
-    /**
-     * Get saved transaction (from DB) by id
-     *
-     * @param $reference_id
-     *
-     * @return bool|mixed
-     */
-    public function getTransactionById($reference_id)
-    {
-        $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_direct_transactions` WHERE `unique_id` = '" . $this->db->escape($reference_id) . "' LIMIT 1");
+	/**
+	 * Get saved transaction (from DB) by id
+	 *
+	 * @param $reference_id
+	 *
+	 * @return bool|mixed
+	 */
+	public function getTransactionById($reference_id)
+	{
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "emerchantpay_direct_transactions` WHERE `unique_id` = '" . $this->db->escape($reference_id) . "' LIMIT 1");
 
-        if ($query->num_rows) {
-            return reset($query->rows);
-        }
+		if ($query->num_rows) {
+			return reset($query->rows);
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    /**
-     * Send transaction to Genesis
-     *
-     * @param $data array Transaction Data
-     * @return mixed
-     * @throws Exception
-     */
-    public function sendTransaction($data)
-    {
-        try {
-            $this->bootstrap();
+	/**
+	 * Send transaction to Genesis
+	 *
+	 * @param $data array Transaction Data
+	 * @return mixed
+	 * @throws Exception
+	 */
+	public function sendTransaction($data)
+	{
+		try {
+			$this->bootstrap();
 
-            switch ($this->config->get('emerchantpay_direct_transaction_type')) {
-                default:
-                case \Genesis\API\Constants\Transaction\Types::AUTHORIZE:
-                    $genesis = new \Genesis\Genesis('Financial\Cards\Authorize');
-                    break;
-                case \Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D:
-                    $genesis = new \Genesis\Genesis('Financial\Cards\Authorize3D');
-                    break;
-                case \Genesis\API\Constants\Transaction\Types::SALE:
-                    $genesis = new \Genesis\Genesis('Financial\Cards\Sale');
-                    break;
-                case \Genesis\API\Constants\Transaction\Types::SALE_3D:
-                    $genesis = new \Genesis\Genesis('Financial\Cards\Sale3D');
-                    break;
-            }
+			$genesis = $this->createGenesisRequest(
+				$this->config->get(
+					$this->isRecurringOrder() ? 'emerchantpay_direct_recurring_transaction_type' : 'emerchantpay_direct_transaction_type'
+				)
+			);
 
-            $genesis
-                ->request()
-                ->setTransactionId($data['transaction_id'])
-                ->setRemoteIp($data['remote_address'])
-                // Financial
-                ->setCurrency($data['currency'])
-                ->setAmount($data['amount'])
-                ->setUsage($data['usage'])
-                // Personal
-                ->setCustomerEmail($data['customer_email'])
-                ->setCustomerPhone($data['customer_phone'])
-                // CC
-                ->setCardHolder($data['card_holder'])
-                ->setCardNumber($data['card_number'])
-                ->setCvv($data['cvv'])
-                ->setExpirationMonth($data['expiration_month'])
-                ->setExpirationYear($data['expiration_year'])
-                // Billing
-                ->setBillingFirstName($data['billing']['first_name'])
-                ->setBillingLastName($data['billing']['last_name'])
-                ->setBillingAddress1($data['billing']['address1'])
-                ->setBillingAddress2($data['billing']['address2'])
-                ->setBillingZipCode($data['billing']['zip'])
-                ->setBillingCity($data['billing']['city'])
-                ->setBillingState($data['billing']['state'])
-                ->setBillingCountry($data['billing']['country'])
-                // Shipping
-                ->setShippingFirstName($data['shipping']['first_name'])
-                ->setShippingLastName($data['shipping']['last_name'])
-                ->setShippingAddress1($data['shipping']['address1'])
-                ->setShippingAddress2($data['shipping']['address2'])
-                ->setShippingZipCode($data['shipping']['zip'])
-                ->setShippingCity($data['shipping']['city'])
-                ->setShippingState($data['shipping']['state'])
-                ->setShippingCountry($data['shipping']['country']);
+			$genesis
+				->request()
+				->setTransactionId($data['transaction_id'])
+				->setRemoteIp($data['remote_address'])
+				// Financial
+				->setCurrency($data['currency'])
+				->setAmount($data['amount'])
+				->setUsage($data['usage'])
+				// Personal
+				->setCustomerEmail($data['customer_email'])
+				->setCustomerPhone($data['customer_phone'])
+				// CC
+				->setCardHolder($data['card_holder'])
+				->setCardNumber($data['card_number'])
+				->setCvv($data['cvv'])
+				->setExpirationMonth($data['expiration_month'])
+				->setExpirationYear($data['expiration_year'])
+				// Billing
+				->setBillingFirstName($data['billing']['first_name'])
+				->setBillingLastName($data['billing']['last_name'])
+				->setBillingAddress1($data['billing']['address1'])
+				->setBillingAddress2($data['billing']['address2'])
+				->setBillingZipCode($data['billing']['zip'])
+				->setBillingCity($data['billing']['city'])
+				->setBillingState($data['billing']['state'])
+				->setBillingCountry($data['billing']['country'])
+				// Shipping
+				->setShippingFirstName($data['shipping']['first_name'])
+				->setShippingLastName($data['shipping']['last_name'])
+				->setShippingAddress1($data['shipping']['address1'])
+				->setShippingAddress2($data['shipping']['address2'])
+				->setShippingZipCode($data['shipping']['zip'])
+				->setShippingCity($data['shipping']['city'])
+				->setShippingState($data['shipping']['state'])
+				->setShippingCountry($data['shipping']['country']);
 
-            if ($this->is3dTransaction()) {
-                $genesis
-                    ->request()
-                    ->setNotificationUrl($data['notification_url'])
-                    ->setReturnSuccessUrl($data['return_success_url'])
-                    ->setReturnFailureUrl($data['return_failure_url']);
+			if ($this->is3dTransaction()) {
+				$genesis
+					->request()
+					->setNotificationUrl($data['notification_url'])
+					->setReturnSuccessUrl($data['return_success_url'])
+					->setReturnFailureUrl($data['return_failure_url']);
+			}
 
-            }
+			$genesis->execute();
 
-            $genesis->execute();
+			return $genesis->response()->getResponseObject();
+		} catch (\Genesis\Exceptions\ErrorAPI $api) {
+			throw $api;
+		} catch (\Exception $exception) {
+			$this->logEx($exception);
 
-            return $genesis->response()->getResponseObject();
-        } catch (\Genesis\Exceptions\ErrorAPI $api) {
-            throw $api;
-        } catch (\Exception $exception) {
-            $this->logEx($exception);
+			return false;
+		}
+	}
 
-            return false;
-        }
-    }
+	/**
+	 * Genesis Request - Reconcile
+	 *
+	 * @param $unique_id string - Id of a Genesis Transaction
+	 * @return mixed
+	 * @throws Exception
+	 */
+	public function reconcile($unique_id)
+	{
+		try {
+			$this->bootstrap();
 
-    /**
-     * Genesis Request - Reconcile
-     *
-     * @param $unique_id string - Id of a Genesis Transaction
-     * @return mixed
-     * @throws Exception
-     */
-    public function reconcile($unique_id)
-    {
-        try {
-            $this->bootstrap();
+			$genesis = new \Genesis\Genesis('WPF\Reconcile');
 
-            $genesis = new \Genesis\Genesis('WPF\Reconcile');
+			$genesis->request()->setUniqueId($unique_id);
 
-            $genesis->request()->setUniqueId($unique_id);
+			$genesis->execute();
 
-            $genesis->execute();
+			return $genesis->response()->getResponseObject();
+		} catch (\Genesis\Exceptions\ErrorAPI $api) {
+			throw $api;
+		} catch (\Exception $exception) {
+			$this->logEx($exception);
 
-            return $genesis->response()->getResponseObject();
-        } catch (\Genesis\Exceptions\ErrorAPI $api) {
-            throw $api;
-        } catch (\Exception $exception) {
-            $this->logEx($exception);
+			return false;
+		}
+	}
 
-            return false;
-        }
-    }
+	/**
+	 * Bootstrap Genesis Library
+	 *
+	 * @return void
+	 */
+	public function bootstrap()
+	{
+		// Look for, but DO NOT try to load via Auto-loader magic methods
+		if (!class_exists('\Genesis\Genesis', false)) {
+			include DIR_APPLICATION . '/../admin/model/payment/emerchantpay/genesis/vendor/autoload.php';
 
-    /**
-     * Bootstrap Genesis Library
-     *
-     * @return void
-     */
-    public function bootstrap()
-    {
-        // Look for, but DO NOT try to load via Auto-loader magic methods
-        if (!class_exists('\Genesis\Genesis', false)) {
-            include DIR_APPLICATION . '/../admin/model/payment/emerchantpay/genesis/vendor/autoload.php';
+			\Genesis\Config::setEndpoint(
+				\Genesis\API\Constants\Endpoints::EMERCHANTPAY
+			);
 
-            \Genesis\Config::setEndpoint(
-                \Genesis\API\Constants\Endpoints::EMERCHANTPAY
-            );
+			\Genesis\Config::setUsername(
+				$this->config->get('emerchantpay_direct_username')
+			);
 
-            \Genesis\Config::setUsername(
-                $this->config->get('emerchantpay_direct_username')
-            );
+			\Genesis\Config::setPassword(
+				$this->config->get('emerchantpay_direct_password')
+			);
 
-            \Genesis\Config::setPassword(
-                $this->config->get('emerchantpay_direct_password')
-            );
+			\Genesis\Config::setToken(
+				$this->config->get('emerchantpay_direct_token')
+			);
 
-            \Genesis\Config::setToken(
-                $this->config->get('emerchantpay_direct_token')
-            );
+			\Genesis\Config::setEnvironment(
+				$this->config->get('emerchantpay_direct_sandbox') ? \Genesis\API\Constants\Environments::STAGING : \Genesis\API\Constants\Environments::PRODUCTION
+			);
+		}
+	}
 
-            \Genesis\Config::setEnvironment(
-                $this->config->get('emerchantpay_direct_sandbox')
-                    ? \Genesis\API\Constants\Environments::STAGING
-                    : \Genesis\API\Constants\Environments::PRODUCTION
-            );
-        }
-    }
+	/**
+	 * Check whether the selected transaction type is a 3d transaction
+	 *
+	 * @return bool
+	 */
+	public function is3dTransaction()
+	{
+		$types = array(
+			\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D,
+			\Genesis\API\Constants\Transaction\Types::SALE_3D,
+			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D,
+		);
 
-    /**
-     * Check whether the selected transaction type is a 3d transaction
-     *
-     * @return bool
-     */
-    public function is3dTransaction()
-    {
-        $types = array(
-            \Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D,
-            \Genesis\API\Constants\Transaction\Types::SALE_3D,
-        );
+		$transaction_type = $this->config->get(
+			$this->isRecurringOrder() ? 'emerchantpay_direct_recurring_transaction_type' : 'emerchantpay_direct_transaction_type'
+		);
 
-        $transaction_type = $this->config->get('emerchantpay_direct_transaction_type');
+		return in_array($transaction_type, $types);
+	}
 
-        return in_array($transaction_type, $types);
-    }
+	/**
+	 * Check if the current visitor is on HTTPS
+	 *
+	 * @return bool
+	 */
+	public function isSecureConnection()
+	{
+		if (!empty($this->request->server['HTTPS']) && strtolower($this->request->server['HTTPS']) != 'off') {
+			return true;
+		}
 
-    /**
-     * Check if the current visitor is on HTTPS
-     *
-     * @return bool
-     */
-    public function isSecureConnection()
-    {
-        if (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off') {
-            return true;
-        }
+		if (!empty($this->request->server['HTTP_X_FORWARDED_PROTO']) && $this->request->server['HTTP_X_FORWARDED_PROTO'] == 'https') {
+			return true;
+		}
 
-        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-            return true;
-        }
+		if (!empty($this->request->server['HTTP_X_FORWARDED_PORT']) && $this->request->server['HTTP_X_FORWARDED_PORT'] == '443') {
+			return true;
+		}
 
-        if (!empty($_SERVER['HTTP_X_FORWARDED_PORT']) && $_SERVER['HTTP_X_FORWARDED_PORT'] == '443') {
-            return true;
-        }
+		return false;
+	}
 
-        return false;
-    }
+	/**
+	 * Generate Transaction Id based on the order id
+	 * and salted to avoid duplication
+	 *
+	 * @param string $prefix
+	 *
+	 * @return string
+	 */
+	public function genTransactionId($prefix = '')
+	{
+		$hash = md5(microtime(true) . uniqid() . mt_rand(PHP_INT_SIZE, PHP_INT_MAX));
 
-    /**
-     * Generate Transaction Id based on the order id
-     * and salted to avoid duplication
-     *
-     * @param string $prefix
-     *
-     * @return string
-     */
-    public function genTransactionId($prefix = '')
-    {
-        $hash = md5(microtime(true) . uniqid() . mt_rand(PHP_INT_SIZE, PHP_INT_MAX));
+		return (string)$prefix . substr($hash, -(strlen($hash) - strlen($prefix)));
+	}
 
-        return (string)$prefix . substr($hash, -(strlen($hash) - strlen($prefix)));
-    }
+	/**
+	 * Get the current front-end language
+	 *
+	 * @return string
+	 */
+	public function getLanguage()
+	{
+		$language = isset($this->session->data['language']) ? $this->session->data['language'] : $this->config->get('config_language');
 
-    /**
-     * Get the current front-end language
-     *
-     * @return string
-     */
-    public function getLanguage()
-    {
-        $language = isset($this->session->data['language'])
-            ? $this->session->data['language']
-            : $this->config->get('config_language');
+		$language_code = substr($language, 0, 2);
 
-        $language_code = substr($language, 0, 2);
+		$this->bootstrap();
 
-        $this->bootstrap();
+		$is_available = @constant('\Genesis\API\Constants\i18n::' . strtoupper($language_code));
 
-        $isAvailable = @constant('\Genesis\API\Constants\i18n::' . strtoupper($language_code));
+		if ($is_available) {
+			return strtolower($language_code);
+		} else {
+			return 'en';
+		}
+	}
 
-        if ($isAvailable) {
-            return strtolower($language_code);
-        } else {
-            return 'en';
-        }
-    }
-
-    /**
-     * Get a description-formatted list of products
-     * inside an order
-     *
-     * @param $order_id
-     * @return string
-     */
-    public function getOrderProducts($order_id)
-    {
-        $order_product_query = $this->db->query("
+	/**
+	 * Get a description-formatted list of products
+	 * inside an order
+	 *
+	 * @param $order_id
+	 * @return string
+	 */
+	public function getOrderProducts($order_id)
+	{
+		$order_product_query = $this->db->query("
             SELECT
                 *
             FROM
@@ -432,87 +429,89 @@ class ModelPaymentEmerchantPayDirect extends Model
                 order_id = '" . abs((int)$order_id) . "'
             ");
 
-        $description = '';
+		$description = '';
 
-        foreach ($order_product_query->rows as $order_product) {
-            $description .= sprintf("%s (%s) x %d\r\n", $order_product['name'], $order_product['model'], $order_product['quantity']);
-        }
+		foreach ($order_product_query->rows as $order_product) {
+			$description .= sprintf("%s (%s) x %d\r\n", $order_product['name'], $order_product['model'], $order_product['quantity']);
+		}
 
-        return $description;
-    }
+		return $description;
+	}
 
-    /**
-     * Get a Usage string with the Store Name
-     *
-     * @return string
-     */
-    public function getUsage()
-    {
-        return sprintf('%s direct transaction', $this->config->get('config_name'));
-    }
+	/**
+	 * Get a Usage string with the Store Name
+	 *
+	 * @return string
+	 */
+	public function getUsage()
+	{
+		return sprintf('%s direct transaction', $this->config->get('config_name'));
+	}
 
-    /**
-     * Log Exception to a log file, if enabled
-     *
-     * @param $exception
-     */
-    public function logEx($exception)
-    {
-        if ($this->config->get('emerchantpay_direct_debug')) {
-            $log = new Log('emerchantpay_direct.log');
-            $log->write($this->jTraceEx($exception));
-        }
-    }
+	/**
+	 * Log Exception to a log file, if enabled
+	 *
+	 * @param $exception
+	 */
+	public function logEx($exception)
+	{
+		if ($this->config->get('emerchantpay_direct_debug')) {
+			$log = new Log('emerchantpay_direct.log');
+			$log->write($this->jTraceEx($exception));
+		}
+	}
 
-    /**
-     * jTraceEx() - provide a Java style exception trace
-     * @param $e Exception
-     * @param $seen - array passed to recursive calls to accumulate trace lines already seen
-     *                     leave as NULL when calling this function
-     * @return array of strings, one entry per trace line
-     */
-    private function jTraceEx($e, $seen = null)
-    {
-        $starter = $seen ? 'Caused by: ' : '';
-        $result  = array();
+	/**
+	 * jTraceEx() - provide a Java style exception trace
+	 * @param $exception Exception
+	 * @param $seen - array passed to recursive calls to accumulate trace lines already seen
+	 *                     leave as NULL when calling this function
+	 * @return array of strings, one entry per trace line
+	 *
+	 * @SuppressWarnings(PHPMD)
+	 */
+	private function jTraceEx($exception, $seen = null)
+	{
+		$starter = ($seen) ? 'Caused by: ' : '';
+		$result  = array();
 
-        if (!$seen) $seen = array();
+		if (!$seen) $seen = array();
 
-        $trace = $e->getTrace();
-        $prev  = $e->getPrevious();
+		$trace = $exception->getTrace();
+		$prev  = $exception->getPrevious();
 
-        $result[] = sprintf('%s%s: %s', $starter, get_class($e), $e->getMessage());
+		$result[] = sprintf('%s%s: %s', $starter, get_class($exception), $exception->getMessage());
 
-        $file = $e->getFile();
-        $line = $e->getLine();
+		$file = $exception->getFile();
+		$line = $exception->getLine();
 
-        while (true) {
-            $current = "$file:$line";
-            if (is_array($seen) && in_array($current, $seen)) {
-                $result[] = sprintf(' ... %d more', count($trace) + 1);
-                break;
-            }
-            $result[] = sprintf(' at %s%s%s(%s%s%s)',
-                                count($trace) && array_key_exists('class', $trace[0]) ? str_replace('\\', '.', $trace[0]['class']) : '',
-                                count($trace) && array_key_exists('class', $trace[0]) && array_key_exists('function', $trace[0]) ? '.' : '',
-                                count($trace) && array_key_exists('function', $trace[0]) ? str_replace('\\', '.', $trace[0]['function']) : '(main)',
-                                $line === null ? $file : basename($file),
-                                $line === null ? '' : ':',
-                                $line === null ? '' : $line);
-            if (is_array($seen))
-                $seen[] = "$file:$line";
-            if (!count($trace))
-                break;
-            $file = array_key_exists('file', $trace[0]) ? $trace[0]['file'] : 'Unknown Source';
-            $line = array_key_exists('file', $trace[0]) && array_key_exists('line', $trace[0]) && $trace[0]['line'] ? $trace[0]['line'] : null;
-            array_shift($trace);
-        }
+		while (true) {
+			$current = "$file:$line";
+			if (is_array($seen) && in_array($current, $seen)) {
+				$result[] = sprintf(' ... %d more', count($trace) + 1);
+				break;
+			}
+			$result[] = sprintf(' at %s%s%s(%s%s%s)',
+				count($trace) && array_key_exists('class', $trace[0]) ? str_replace('\\', '.', $trace[0]['class']) : '',
+				count($trace) && array_key_exists('class', $trace[0]) && array_key_exists('function', $trace[0]) ? '.' : '',
+				count($trace) && array_key_exists('function', $trace[0]) ? str_replace('\\', '.', $trace[0]['function']) : '(main)',
+				($line === null) ? $file : basename($file),
+				($line === null) ? '' : ':',
+				($line === null) ? '' : $line);
+			if (is_array($seen))
+				$seen[] = "$file:$line";
+			if (!count($trace))
+				break;
+			$file = array_key_exists('file', $trace[0]) ? $trace[0]['file'] : 'Unknown Source';
+			$line = (array_key_exists('file', $trace[0]) && array_key_exists('line', $trace[0]) && $trace[0]['line']) ? $trace[0]['line'] : null;
+			array_shift($trace);
+		}
 
-        $result = join("\n", $result);
+		$result = join("\n", $result);
 
-        if ($prev)
-            $result .= "\n" . $this->jTraceEx($prev, $seen);
+		if ($prev)
+			$result .= "\n" . $this->jTraceEx($prev, $seen);
 
-        return $result;
-    }
+		return $result;
+	}
 }

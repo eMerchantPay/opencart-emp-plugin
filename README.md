@@ -40,6 +40,34 @@ Installation (Manual)
 3.  Navigate to ```Extensions -> Payments``` and click install on ```eMerchantPay Direct``` and/or ```eMerchantPay Checkout```
 4.  Set the login credentials (```Username```, ```Password```, ```Token```) and adjust the configuration to your needs.
 
+Enable OpenCart SSL
+------------
+This steps should be followed if you wish to use the ```eMerchantPay Direct``` Method.
+
+* Ensure you have installed a valid __SSL Certificate__ on your __PCI-DSS Certified__ Web Server and you have configured your __Virtual Host__ properly.
+* Login to your OpenCart Admin Panel
+* Navigate to ```Settings``` -> ```your Store``` -> ```Server```
+* Set ```Use SSL``` to __Yes__ in ```Security``` tab and save your changes
+* Set the __HTTPS_SERVER__ and __HTTPS_CATALOG__ settings in your ```admin/config.php``` to use ```https``` protocol
+* Set the __HTTPS_SERVER__ setting in your ```config.php``` to use ```https``` protocol
+* Set the __site_ssl__ setting to ```true``` in your ```system/config/default.php``` file
+* It is recommended to add a __Rewrite Rule__ from ```http``` to ```https``` or to add a __Permanent Redirect__ to ```https``` in your virtual host
+
+Recurring Payments
+------------
+OpenCart has an integrated functionality for processing recurring transactions.
+In order to simplify the process of handling recurring payments, the recurring products cannot be ordered along with other products (recurring or non-recurring) and must be ordered separately, one per order.
+
+If you are interested in, you could read more about:
+
+* Total Order Calculation
+* Payment Method Configuration
+* Recurring Profile Creation
+* Setting up Scheduled Tasks & Cron Jobs Configurations
+* Cron Jobs IP Restrictions
+* Handling Recurring Payments with Payment Module
+
+in [wiki for Recurring Payments](https://github.com/eMerchantPay/opencart-emp-plugin/wiki/OpenCart-Recurring-Module-Configurations)
 
 _Note_: If you have trouble with your credentials or terminal configuration, get in touch with our [support] team
 

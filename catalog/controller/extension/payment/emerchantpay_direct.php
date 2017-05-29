@@ -18,7 +18,7 @@
  */
 
 if (!class_exists('ControllerPaymentEmerchantPayDirect')) {
-    require_once DIR_APPLICATION . 'controller/payment/emerchantpay_direct.php';
+	require_once DIR_APPLICATION . 'controller/payment/emerchantpay_direct.php';
 }
 
 /**

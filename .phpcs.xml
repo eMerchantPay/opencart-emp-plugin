@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ruleset name="OpenCart EMP Plugin Coding Standards">
+    <description>Generally-applicable sniffs for OpenCart EMP Plugin</description>
+
+    <rule ref="OpenCart" />
+
+    <exclude-pattern>*/genesis/*</exclude-pattern>
+</ruleset>

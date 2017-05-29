@@ -19,6 +19,13 @@
     display:inline-block;
 }
 
+.transaction-action-button {
+    display:inline-block;
+}
+.log-entry-row {
+    background-color: #F8F8F8;
+}
+
 span.emerchantpay-logo {
     background-image: url("./img/logo.png");
     background-position: left center;

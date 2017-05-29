@@ -12,9 +12,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @author      eMerchantPay
+ * @author	  eMerchantPay
  * @copyright   2015 eMerchantPay Ltd.
- * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
+ * @license	 http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
 /**
@@ -24,313 +24,381 @@
  */
 class ControllerPaymentEmerchantPayCheckout extends Controller
 {
-    /**
-     * Init
-     *
-     * @param $registry
-     */
-    public function __construct($registry)
-    {
-        parent::__construct($registry);
-    }
+	/**
+	 * Init
+	 *
+	 * @param $registry
+	 */
+	public function __construct($registry)
+	{
+		parent::__construct($registry);
+	}
 
-    /**
-     * Entry-point
-     *
-     * @return mixed
-     */
-    public function index()
-    {
-        $this->load->language('payment/emerchantpay_checkout');
+	/**
+	 * Entry-point
+	 *
+	 * @return mixed
+	 */
+	public function index()
+	{
+		$this->load->language('payment/emerchantpay_checkout');
+		$this->load->model('payment/emerchantpay_checkout');
 
-        $data = array(
-            'text_title'     => $this->language->get('text_title'),
-            'text_loading'   => $this->language->get('text_loading'),
+		if ($this->model_payment_emerchantpay_checkout->isCartContentMixed()) {
+			$template = 'emerchantpay_disabled.tpl';
+			$data = $this->prepareViewDataMixedCart();
 
-            'button_confirm' => $this->language->get('button_confirm'),
-            'button_target'  => $this->url->link('payment/emerchantpay_checkout/send', '', 'SSL'),
+		} else {
+			$template = 'emerchantpay_checkout.tpl';
 
-            'scripts'        => $this->document->getScripts()
-        );
+			$data = $this->prepareViewData();
+		}
 
-        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/emerchantpay_checkout.tpl')) {
-            return $this->load->view($this->config->get('config_template') . '/template/payment/emerchantpay_checkout.tpl', $data);
-        } else {
-            return $this->load->view('payment/emerchantpay_checkout.tpl', $data);
-        }
-    }
+		if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/' . $template)) {
+			return $this->load->view(
+				$this->config->get('config_template') . '/template/payment/' . $template,
+				$data
+			);
+		} else {
+			return $this->load->view('payment/' . $template, $data);
+		}
+	}
 
-    /**
-     * Process order confirmation
-     *
-     * @return void
-     */
-    public function send()
-    {
-        $this->load->model('checkout/order');
-        $this->load->model('payment/emerchantpay_checkout');
+	/**
+	 * Prepares data for the view
+	 *
+	 * @return array
+	 */
+	public function prepareViewData()
+	{
+		$data = array(
+			'text_title'	 => $this->language->get('text_title'),
+			'text_loading'   => $this->language->get('text_loading'),
 
-        $this->load->language('payment/emerchantpay_checkout');
+			'button_confirm' => $this->language->get('button_confirm'),
+			'button_target'  => $this->url->link('payment/emerchantpay_checkout/send', '', 'SSL'),
 
-        try {
-            $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+			'scripts'		 => $this->document->getScripts()
+		);
 
-            $data = array(
-                'transaction_id'     => $this->model_payment_emerchantpay_checkout->genTransactionId(),
+		return $data;
+	}
 
-                'remote_address'     => $this->request->server['REMOTE_ADDR'],
+	/**
+	 * Prepares data for the view when cart content is mixed
+	 *
+	 * @return array
+	 */
+	public function prepareViewDataMixedCart()
+	{
+		$data = array(
+			'text_loading'					  => $this->language->get('text_loading'),
+			'text_payment_mixed_cart_content' => $this->language->get('text_payment_mixed_cart_content'),
+			'button_shopping_cart'			  => $this->language->get('button_shopping_cart'),
+			'button_target'					  => $this->url->link('checkout/cart')
+		);
 
-                'usage'              => $this->model_payment_emerchantpay_checkout->getUsage(),
-                'description'        => $this->model_payment_emerchantpay_checkout->getOrderProducts(
-                    $this->session->data['order_id']
-                ),
+		return $data;
+	}
 
-                'language'           => $this->model_payment_emerchantpay_checkout->getLanguage(),
+	/**
+	 * Process order confirmation
+	 *
+	 * @return void
+	 */
+	public function send()
+	{
+		$this->load->model('checkout/order');
+		$this->load->model('payment/emerchantpay_checkout');
 
-                'currency'           => $this->getCurrencyCode(),
-                'amount'             => $order_info['total'],
+		$this->load->language('payment/emerchantpay_checkout');
 
-                'customer_email'     => $order_info['email'],
-                'customer_phone'     => $order_info['telephone'],
+		try {
+			$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
 
-                'notification_url'   => $this->url->link('payment/emerchantpay_checkout/callback', '', 'SSL'),
-                'return_success_url' => $this->url->link('payment/emerchantpay_checkout/success', '', 'SSL'),
-                'return_failure_url' => $this->url->link('payment/emerchantpay_checkout/failure', '', 'SSL'),
-                'return_cancel_url'  => $this->url->link('payment/emerchantpay_checkout/cancel', '', 'SSL'),
+			$data = array(
+				'transaction_id'	 => $this->model_payment_emerchantpay_checkout->genTransactionId(),
 
-                'billing'            => array(
-                    'first_name' => $order_info['payment_firstname'],
-                    'last_name'  => $order_info['payment_lastname'],
-                    'address1'   => $order_info['payment_address_1'],
-                    'address2'   => $order_info['payment_address_2'],
-                    'zip'        => $order_info['payment_postcode'],
-                    'city'       => $order_info['payment_city'],
-                    'state'      => $order_info['payment_zone_code'],
-                    'country'    => $order_info['payment_iso_code_2'],
-                ),
+				'remote_address'	 => $this->request->server['REMOTE_ADDR'],
 
-                'shipping'           => array(
-                    'first_name' => $order_info['shipping_firstname'],
-                    'last_name'  => $order_info['shipping_lastname'],
-                    'address1'   => $order_info['shipping_address_1'],
-                    'address2'   => $order_info['shipping_address_2'],
-                    'zip'        => $order_info['shipping_postcode'],
-                    'city'       => $order_info['shipping_city'],
-                    'state'      => $order_info['shipping_zone_code'],
-                    'country'    => $order_info['shipping_iso_code_2'],
-                )
-            );
+				'usage'			     => $this->model_payment_emerchantpay_checkout->getUsage(),
+				'description'		 => $this->model_payment_emerchantpay_checkout->getOrderProducts(
+					$this->session->data['order_id']
+				),
 
-            $transaction = $this->model_payment_emerchantpay_checkout->create($data);
+				'language'		     => $this->model_payment_emerchantpay_checkout->getLanguage(),
 
-            if (isset($transaction->unique_id)) {
-                $timestamp = ($transaction->timestamp instanceof \DateTime)
-                    ? $transaction->timestamp->format('c')
-                    : $transaction->timestamp;
+				'currency'		     => $this->model_payment_emerchantpay_checkout->getCurrencyCode(),
+				'amount'			 => $order_info['total'],
 
-                $data = array(
-                    'type'              => 'checkout',
-                    'reference_id'      => '0',
-                    'order_id'          => $order_info['order_id'],
-                    'unique_id'         => $transaction->unique_id,
-                    'status'            => $transaction->status,
-                    'amount'            => $transaction->amount,
-                    'currency'          => $transaction->currency,
-                    'message'           => isset($transaction->message) ? $transaction->message : '',
-                    'technical_message' => isset($transaction->technical_message) ? $transaction->technical_message : '',
-                    'timestamp'         => $timestamp,
-                );
+				'customer_email'	 => $order_info['email'],
+				'customer_phone'	 => $order_info['telephone'],
 
-                $this->model_payment_emerchantpay_checkout->populateTransaction($data);
+				'notification_url'   => $this->url->link('payment/emerchantpay_checkout/callback', '', 'SSL'),
+				'return_success_url' => $this->url->link('payment/emerchantpay_checkout/success', '', 'SSL'),
+				'return_failure_url' => $this->url->link('payment/emerchantpay_checkout/failure', '', 'SSL'),
+				'return_cancel_url'  => $this->url->link('payment/emerchantpay_checkout/cancel', '', 'SSL'),
 
-                $this->model_checkout_order->addOrderHistory(
-                    $this->session->data['order_id'],
-                    $this->config->get('emerchantpay_checkout_order_status_id'),
-                    $this->language->get('text_payment_status_initiated'),
-                    true
-                );
+				'billing'			 => array(
+					'first_name'     => $order_info['payment_firstname'],
+					'last_name'      => $order_info['payment_lastname'],
+					'address1'       => $order_info['payment_address_1'],
+					'address2'       => $order_info['payment_address_2'],
+					'zip'		     => $order_info['payment_postcode'],
+					'city'	         => $order_info['payment_city'],
+					'state'	         => $order_info['payment_zone_code'],
+					'country'	     => $order_info['payment_iso_code_2'],
+				),
 
-                $json = array(
-                    'redirect' => $transaction->redirect_url
-                );
-            } else {
-                $json = array(
-                    'error' => $this->language->get('text_payment_system_error')
-                );
-            }
-        } catch (\Exception $exception) {
-            $json = array(
-                'error' => ($exception->getMessage())
-                    ? $exception->getMessage()
-                    : $this->language->get('text_payment_system_error')
-            );
+				'shipping'		     => array(
+					'first_name'     => $order_info['shipping_firstname'],
+					'last_name'      => $order_info['shipping_lastname'],
+					'address1'       => $order_info['shipping_address_1'],
+					'address2'       => $order_info['shipping_address_2'],
+					'zip'		     => $order_info['shipping_postcode'],
+					'city'	         => $order_info['shipping_city'],
+					'state'	         => $order_info['shipping_zone_code'],
+					'country'	     => $order_info['shipping_iso_code_2'],
+				)
+			);
 
-            $this->model_payment_emerchantpay_checkout->logEx($exception);
-        }
+			$transaction = $this->model_payment_emerchantpay_checkout->create($data);
 
-        $this->response->addHeader('Content-Type: application/json');
+			if (isset($transaction->unique_id)) {
+				$timestamp = ($transaction->timestamp instanceof \DateTime) ? $transaction->timestamp->format('c') : $transaction->timestamp;
 
-        $this->response->setOutput(
-            json_encode($json)
-        );
-    }
+				$data = array(
+					'type'			    => 'checkout',
+					'reference_id'	    => '0',
+					'order_id'		    => $order_info['order_id'],
+					'unique_id'		    => $transaction->unique_id,
+					'status'			=> $transaction->status,
+					'amount'			=> $transaction->amount,
+					'currency'		    => $transaction->currency,
+					'message'		    => isset($transaction->message) ? $transaction->message : '',
+					'technical_message' => isset($transaction->technical_message) ? $transaction->technical_message : '',
+					'timestamp'		    => $timestamp,
+				);
 
-    /**
-     * Process Gateway Notification
-     *
-     * @return void
-     */
-    public function callback()
-    {
-        $this->load->model('checkout/order');
-        $this->load->model('payment/emerchantpay_checkout');
+				$this->model_payment_emerchantpay_checkout->populateTransaction($data);
 
-        $this->load->language('payment/emerchantpay_checkout');
+				$this->model_checkout_order->addOrderHistory(
+					$this->session->data['order_id'],
+					$this->config->get('emerchantpay_checkout_order_status_id'),
+					$this->language->get('text_payment_status_initiated'),
+					true
+				);
 
-        try {
-            $this->model_payment_emerchantpay_checkout->bootstrap();
+				if ($this->model_payment_emerchantpay_checkout->isRecurringOrder()) {
+					$this->addOrderRecurring(null); // "checkout" transaction type
+					$this->model_payment_emerchantpay_checkout->populateRecurringTransaction($data);
+					$this->model_payment_emerchantpay_checkout->updateOrderRecurring($data);
+				}
 
-            $notification = new \Genesis\API\Notification(
-                $this->request->post
-            );
+				$json = array(
+					'redirect' => $transaction->redirect_url
+				);
+			} else {
+				$json = array(
+					'error' => $this->language->get('text_payment_system_error')
+				);
+			}
+		} catch (\Exception $exception) {
+			$json = array(
+				'error' => ($exception->getMessage()) ? $exception->getMessage() : $this->language->get('text_payment_system_error')
+			);
 
-            if ($notification->isAuthentic()) {
-                $notification->initReconciliation();
+			$this->model_payment_emerchantpay_checkout->logEx($exception);
+		}
 
-                $wpf_reconcile = $notification->getReconciliationObject();
+		$this->response->addHeader('Content-Type: application/json');
 
-                $timestamp = ($wpf_reconcile->timestamp instanceof \DateTime)
-                    ? $wpf_reconcile->timestamp->format('c')
-                    : $wpf_reconcile->timestamp;
+		$this->response->setOutput(
+			json_encode($json)
+		);
+	}
 
-                $data = array(
-                    'unique_id' => $wpf_reconcile->unique_id,
-                    'status'    => $wpf_reconcile->status,
-                    'currency'  => $wpf_reconcile->currency,
-                    'amount'    => $wpf_reconcile->amount,
-                    'timestamp' => $timestamp,
-                );
+	/**
+	 * Process Gateway Notification
+	 *
+	 * @return void
+	 */
+	public function callback()
+	{
+		$this->load->model('checkout/order');
+		$this->load->model('payment/emerchantpay_checkout');
 
-                $this->model_payment_emerchantpay_checkout->populateTransaction($data);
+		$this->load->language('payment/emerchantpay_checkout');
 
-                $transaction = $this->model_payment_emerchantpay_checkout->getTransactionById(
-                    $wpf_reconcile->unique_id
-                );
+		try {
+			$this->model_payment_emerchantpay_checkout->bootstrap();
 
-                if (isset($transaction['order_id']) && abs((int)$transaction['order_id']) > 0) {
-                    if (isset($wpf_reconcile->payment_transaction)) {
+			$notification = new \Genesis\API\Notification(
+				$this->request->post
+			);
 
-                        $payment_transaction = $wpf_reconcile->payment_transaction;
+			if ($notification->isAuthentic()) {
+				$notification->initReconciliation();
 
-                        $timestamp = ($payment_transaction->timestamp instanceof \DateTime)
-                            ? $payment_transaction->timestamp->format('c')
-                            : $payment_transaction->timestamp;
+				$wpf_reconcile = $notification->getReconciliationObject();
 
-                        $data = array(
-                            'order_id'          => $transaction['order_id'],
-                            'reference_id'      => $wpf_reconcile->unique_id,
-                            'unique_id'         => $payment_transaction->unique_id,
-                            'type'              => $payment_transaction->transaction_type,
-                            'mode'              => $payment_transaction->mode,
-                            'status'            => $payment_transaction->status,
-                            'currency'          => $payment_transaction->currency,
-                            'amount'            => $payment_transaction->amount,
-                            'timestamp'         => $timestamp,
-                            'terminal_token'    => isset($payment_transaction->terminal_token) ? $payment_transaction->terminal_token : '',
-                            'message'           => isset($payment_transaction->message) ? $payment_transaction->message : '',
-                            'technical_message' => isset($payment_transaction->technical_message) ? $payment_transaction->technical_message : '',
-                        );
+				$timestamp = ($wpf_reconcile->timestamp instanceof \DateTime) ? $wpf_reconcile->timestamp->format('c') : $wpf_reconcile->timestamp;
 
-                        $this->model_payment_emerchantpay_checkout->populateTransaction($data);
-                    }
+				$data = array(
+					'unique_id' => $wpf_reconcile->unique_id,
+					'status'	=> $wpf_reconcile->status,
+					'currency'  => $wpf_reconcile->currency,
+					'amount'	=> $wpf_reconcile->amount,
+					'timestamp' => $timestamp,
+				);
 
-                    switch ($wpf_reconcile->status) {
-                        case \Genesis\API\Constants\Transaction\States::APPROVED:
-                            $this->model_checkout_order->addOrderHistory(
-                                $transaction['order_id'],
-                                $this->config->get('emerchantpay_checkout_order_status_id'),
-                                $this->language->get('text_payment_status_successful'),
-                                true
-                            );
-                            break;
-                        case \Genesis\API\Constants\Transaction\States::DECLINED:
-                        case \Genesis\API\Constants\Transaction\States::ERROR:
-                            $this->model_checkout_order->addOrderHistory(
-                                $transaction['order_id'],
-                                $this->config->get('emerchantpay_checkout_order_failure_status_id'),
-                                $this->language->get('text_payment_status_unsuccessful'),
-                                true
-                            );
-                            break;
-                    }
-                }
+				$this->model_payment_emerchantpay_checkout->populateTransaction($data);
 
-                $this->response->addHeader('Content-Type: text/xml');
+				$transaction = $this->model_payment_emerchantpay_checkout->getTransactionById(
+					$wpf_reconcile->unique_id
+				);
 
-                $this->response->setOutput(
-                    $notification->generateResponse()
-                );
-            }
-        } catch (\Exception $exception) {
-            $this->model_payment_emerchantpay_checkout->logEx($exception);
-        }
-    }
+				$reference = null;
 
-    /**
-     * Handle client redirection for successful status
-     *
-     * @return void
-     */
-    public function success()
-    {
-        $this->response->redirect($this->url->link('checkout/success', '', 'SSL'));
-    }
+				if (isset($transaction['order_id']) && abs((int)$transaction['order_id']) > 0) {
+					if (isset($wpf_reconcile->payment_transaction)) {
 
-    /**
-     * Handle client redirection for failure status
-     *
-     * @return void
-     */
-    public function failure()
-    {
-        $this->load->language('payment/emerchantpay_checkout');
+						$payment_transaction = $wpf_reconcile->payment_transaction;
 
-        $this->session->data['error'] = $this->language->get('text_payment_failure');
+						$timestamp = ($payment_transaction->timestamp instanceof \DateTime) ? $payment_transaction->timestamp->format('c') : $payment_transaction->timestamp;
 
-        $this->response->redirect($this->url->link('checkout/checkout', '', 'SSL'));
-    }
+						$data = array(
+							'order_id'		    => $transaction['order_id'],
+							'reference_id'	    => $wpf_reconcile->unique_id,
+							'unique_id'		    => $payment_transaction->unique_id,
+							'type'			    => $payment_transaction->transaction_type,
+							'mode'			    => $payment_transaction->mode,
+							'status'			=> $payment_transaction->status,
+							'currency'		    => $payment_transaction->currency,
+							'amount'			=> $payment_transaction->amount,
+							'timestamp'		    => $timestamp,
+							'terminal_token'	=> isset($payment_transaction->terminal_token) ? $payment_transaction->terminal_token : '',
+							'message'		    => isset($payment_transaction->message) ? $payment_transaction->message : '',
+							'technical_message' => isset($payment_transaction->technical_message) ? $payment_transaction->technical_message : '',
+						);
 
-    /**
-     * Handle client redirection for cancelled status
-     *
-     * @return void
-     */
-    public function cancel()
-    {
-        $this->load->language('payment/emerchantpay_checkout');
+						$this->model_payment_emerchantpay_checkout->populateTransaction($data);
 
-        $this->session->data['error'] = $this->language->get('text_payment_cancelled');
+						if ($this->model_payment_emerchantpay_checkout->isInitialRecurringTransaction($payment_transaction->transaction_type))
+						{
+							$reference = $payment_transaction->unique_id;
+						}
+					}
 
-        $this->response->redirect($this->url->link('checkout/checkout', '', 'SSL'));
-    }
+					switch ($wpf_reconcile->status) {
+						case \Genesis\API\Constants\Transaction\States::APPROVED:
+							$this->model_checkout_order->addOrderHistory(
+								$transaction['order_id'],
+								$this->config->get('emerchantpay_checkout_order_status_id'),
+								$this->language->get('text_payment_status_successful'),
+								true
+							);
+							break;
+						case \Genesis\API\Constants\Transaction\States::DECLINED:
+						case \Genesis\API\Constants\Transaction\States::ERROR:
+							$this->model_checkout_order->addOrderHistory(
+								$transaction['order_id'],
+								$this->config->get('emerchantpay_checkout_order_failure_status_id'),
+								$this->language->get('text_payment_status_unsuccessful'),
+								true
+							);
+							break;
+					}
+				}
 
-    /**
-     * Redirect the user (to the login page), if they are not logged-in
-     */
-    protected function isUserLoggedIn()
-    {
-        $isCallback = strpos((string)$this->request->get['route'], 'callback') !== false;
+				$this->model_payment_emerchantpay_checkout->populateRecurringTransaction($data);
+				$this->model_payment_emerchantpay_checkout->updateOrderRecurring($data, $reference);
 
-        if (!$this->customer->isLogged() && !$isCallback) {
-            $this->response->redirect($this->url->link('account/login', '', 'SSL'));
-        }
-    }
+				$this->response->addHeader('Content-Type: text/xml');
 
-    /**
-     * Get current Currency Code
-     * @return string
-     */
-    protected function getCurrencyCode() {
-        return $this->session->data['currency'];
-    }
+				$this->response->setOutput(
+					$notification->generateResponse()
+				);
+			}
+		} catch (\Exception $exception) {
+			$this->model_payment_emerchantpay_checkout->logEx($exception);
+		}
+	}
+
+	/**
+	 * Handle client redirection for successful status
+	 *
+	 * @return void
+	 */
+	public function success()
+	{
+		$this->response->redirect($this->url->link('checkout/success', '', 'SSL'));
+	}
+
+	/**
+	 * Handle client redirection for failure status
+	 *
+	 * @return void
+	 */
+	public function failure()
+	{
+		$this->load->language('payment/emerchantpay_checkout');
+
+		$this->session->data['error'] = $this->language->get('text_payment_failure');
+
+		$this->response->redirect($this->url->link('checkout/checkout', '', 'SSL'));
+	}
+
+	/**
+	 * Handle client redirection for cancelled status
+	 *
+	 * @return void
+	 */
+	public function cancel()
+	{
+		$this->load->language('payment/emerchantpay_checkout');
+
+		$this->session->data['error'] = $this->language->get('text_payment_cancelled');
+
+		$this->response->redirect($this->url->link('checkout/checkout', '', 'SSL'));
+	}
+
+	/**
+	 * Redirect the user (to the login page), if they are not logged-in
+	 */
+	protected function isUserLoggedIn()
+	{
+		$is_callback = strpos((string)$this->request->get['route'], 'callback') !== false;
+
+		if (!$this->customer->isLogged() && !$is_callback) {
+			$this->response->redirect($this->url->link('account/login', '', 'SSL'));
+		}
+	}
+
+	/**
+	 * Adds recurring order
+	 * @param string $payment_reference
+	 */
+	public function addOrderRecurring($payment_reference)
+	{
+		$recurring_products = $this->cart->getRecurringProducts();
+		if (!empty($recurring_products)) {
+			$this->load->model('payment/emerchantpay_checkout');
+			$this->model_payment_emerchantpay_checkout->addOrderRecurring(
+				$recurring_products,
+				$payment_reference
+			);
+		}
+	}
+
+	/**
+	 * Process the cron if the request is local
+	 *
+	 * @return void
+	 */
+	public function cron()
+	{
+		$this->load->model('payment/emerchantpay_checkout');
+		$this->model_payment_emerchantpay_checkout->processRecurringOrders();
+	}
 }

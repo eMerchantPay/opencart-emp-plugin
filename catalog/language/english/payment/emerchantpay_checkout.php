@@ -18,12 +18,24 @@
  */
 
 // Text
-$_['text_title'] = 'Credit Card / Debit Card (eMerchantPay Checkout)';
+$_['text_title']                  = 'Credit Card / Debit Card (eMerchantPay Checkout)';
+$_['text_trial_single_payment']   = '%s for the first %s %s, then ';
+$_['text_trial_multiple_payment'] = '%s every %s %s for %s payments, then ';
+$_['text_recurring']              = '%s every %s %s';
+$_['text_length']                 = ' for %s payments';
+
+// Buttons
+$_['button_shopping_cart'] = 'Go to shopping cart';
+
+// Warnings
+$_['text_payment_mixed_cart_content'] = 'Your order cannot be processed with the eMerchantPay Checkout payment method with the selected shopping cart content. '
+	. 'Recurring items cannot be ordered along with other recurring or non-recurring items. '
+	. 'Please split your order on multiple orders placing recurring item(s) separately (one per order).';
 
 // Errors
-$_['text_payment_failure']      = 'The payment attempt was unsuccessful, please verify your input and/or try again later!';
-$_['text_payment_system_error'] = "Sorry, we're experiencing issues processing your order.\nPlease try again or contact us for assistance!";
-$_['text_payment_cancelled']    = 'Your checkout session has been successfully cancelled!';
+$_['text_payment_failure']            = 'The payment attempt was unsuccessful, please verify your input and/or try again later!';
+$_['text_payment_system_error']       = "Sorry, we're experiencing issues processing your order.\nPlease try again or contact us for assistance!";
+$_['text_payment_cancelled']          = 'Your checkout session has been successfully cancelled!';
 
 // Order Status
 $_['text_payment_status_initiated']    = 'Checkout session initiated...';

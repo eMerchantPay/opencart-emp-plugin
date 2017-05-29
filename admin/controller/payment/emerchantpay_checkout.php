@@ -12,13 +12,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @author      eMerchantPay
+ * @author	  eMerchantPay
  * @copyright   2016 eMerchantPay Ltd.
- * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
+ * @license	 http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
 if (!class_exists('ControllerPaymentEmerchantPayBase')) {
-    require_once DIR_APPLICATION . "controller/payment/emerchantpay/base_controller.php";
+	require_once DIR_APPLICATION . "controller/payment/emerchantpay/base_controller.php";
 }
 
 /**
@@ -28,20 +28,20 @@ if (!class_exists('ControllerPaymentEmerchantPayBase')) {
  */
 class ControllerPaymentEmerchantPayCheckout extends ControllerPaymentEmerchantPayBase
 {
-    /**
-     * Module Name (Used in View - Templates)
-     *
-     * @var string
-     */
-    protected $module_name = 'emerchantpay_checkout';
+	/**
+	 * Module Name (Used in View - Templates)
+	 *
+	 * @var string
+	 */
+	protected $module_name = 'emerchantpay_checkout';
 
-    /**
-     * Used to find out if the payment method requires SSL
-     *
-     * @return bool
-     */
-    protected function getModuleRequiresSSL()
-    {
-        return false;
-    }
+	/**
+	 * Used to find out if the payment method requires SSL
+	 *
+	 * @return bool
+	 */
+	protected function isModuleRequiresSsl()
+	{
+		return false;
+	}
 }

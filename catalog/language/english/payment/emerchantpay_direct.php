@@ -18,8 +18,20 @@
  */
 
 // Text
-$_['text_title']       = 'Credit Card / Debit Card (eMerchantPay Direct)';
-$_['text_credit_card'] = 'Card Details';
+$_['text_title']       			  = 'Credit Card / Debit Card (eMerchantPay Direct)';
+$_['text_credit_card'] 			  = 'Card Details';
+$_['text_trial_single_payment']   = '%s for the first %s %s, then ';
+$_['text_trial_multiple_payment'] = '%s every %s %s for %s payments, then ';
+$_['text_recurring']   			  = '%s every %s %s';
+$_['text_length']      			  = ' for %s payments';
+
+// Buttons
+$_['button_shopping_cart'] = 'Go to shopping cart';
+
+// Warnings
+$_['text_payment_mixed_cart_content'] = 'Your order cannot be processed with the eMerchantPay Direct payment method with the selected shopping cart content. '
+	. 'Recurring items cannot be ordered along with other recurring or non-recurring items. '
+	. 'Please split your order on multiple orders placing recurring item(s) separately (one per order).';
 
 // Entry
 $_['entry_cc_owner']  = 'Card Owner';

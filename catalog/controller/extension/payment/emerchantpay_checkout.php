@@ -18,7 +18,7 @@
  */
 
 if (!class_exists('ControllerPaymentEmerchantPayCheckout')) {
-    require_once DIR_APPLICATION . 'controller/payment/emerchantpay_checkout.php';
+	require_once DIR_APPLICATION . 'controller/payment/emerchantpay_checkout.php';
 }
 
 /**
