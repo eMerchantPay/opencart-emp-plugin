@@ -17,13 +17,25 @@
  * @license	 http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+if (!class_exists('ControllerPaymentEmerchantPayBase')) {
+	require_once DIR_APPLICATION . "controller/payment/emerchantpay/base_controller.php";
+}
+
 /**
  * Front-end controller for the "eMerchantPay Checkout" module
  *
  * @package EMerchantPayCheckout
  */
-class ControllerPaymentEmerchantPayCheckout extends Controller
+class ControllerPaymentEmerchantPayCheckout extends ControllerPaymentEmerchantPayBase
 {
+
+	/**
+	 * Module Name
+	 *
+	 * @var string
+	 */
+	protected $module_name = 'emerchantpay_checkout';
+
 	/**
 	 * Init
 	 *
@@ -311,8 +323,10 @@ class ControllerPaymentEmerchantPayCheckout extends Controller
 					}
 				}
 
-				$this->model_payment_emerchantpay_checkout->populateRecurringTransaction($data);
-				$this->model_payment_emerchantpay_checkout->updateOrderRecurring($data, $reference);
+				if ($this->model_payment_emerchantpay_checkout->isRecurringOrder()) {
+					$this->model_payment_emerchantpay_checkout->populateRecurringTransaction($data);
+					$this->model_payment_emerchantpay_checkout->updateOrderRecurring($data, $reference);
+				}
 
 				$this->response->addHeader('Content-Type: text/xml');
 

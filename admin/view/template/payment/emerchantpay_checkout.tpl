@@ -155,14 +155,15 @@
                                     />
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label class="col-sm-2 control-label" for="input-order-status">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="emerchantpay_checkout_order_status_id">
                             <span data-toggle="tooltip" title="<?php echo $help_order_status; ?>">
                                 <?php echo $entry_order_status; ?>
                             </span>
                                 </label>
                                 <div class="col-sm-10">
-                                    <select name="emerchantpay_checkout_order_status_id" id="input-order-status" class="form-control">
+                                    <select name="emerchantpay_checkout_order_status_id" id="emerchantpay_checkout_order_status_id" class="form-control">
+                                        <option value="" >- <?php echo $text_select_status; ?> -</option>
                                         <?php foreach ($order_statuses as $order_status) { ?>
                                         <?php if ($order_status['order_status_id'] == $emerchantpay_checkout_order_status_id) { ?>
                                         <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
@@ -173,14 +174,15 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label class="col-sm-2 control-label" for="input-order-status">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="emerchantpay_checkout_order_failure_status_id">
                             <span data-toggle="tooltip" title="<?php echo $help_failure_order_status; ?>">
                                 <?php echo $entry_order_status_failure; ?>
                             </span>
                                 </label>
                                 <div class="col-sm-10">
-                                    <select name="emerchantpay_checkout_order_failure_status_id" id="input-order-status" class="form-control">
+                                    <select name="emerchantpay_checkout_order_failure_status_id" id="emerchantpay_checkout_order_failure_status_id" class="form-control">
+                                        <option value="" >- <?php echo $text_select_status; ?> -</option>
                                         <?php foreach ($order_statuses as $order_status) { ?>
                                         <?php if ($order_status['order_status_id'] == $emerchantpay_checkout_order_failure_status_id) { ?>
                                         <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
@@ -413,6 +415,22 @@
                     validators: {
                         notEmpty: {
                             message: '<?php echo $error_transaction_type;?>'
+                        }
+                    }
+                },
+                orderStatus: {
+                    selector: '#<?php echo $module_name;?>_order_status_id',
+                    validators: {
+                        notEmpty: {
+                            message: '<?php echo $error_order_status;?>'
+                        }
+                    }
+                },
+                orderFailureStatus: {
+                    selector: '#<?php echo $module_name;?>_order_failure_status_id',
+                    validators: {
+                        notEmpty: {
+                            message: '<?php echo $error_order_failure_status;?>'
                         }
                     }
                 }

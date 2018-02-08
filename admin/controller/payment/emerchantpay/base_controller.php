@@ -65,7 +65,10 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 		'warning',
 		'username',
 		'password',
-		'transaction_type'
+		'transaction_type',
+		'order_status',
+		'order_async_status',
+		'order_failure_status'
 	);
 
 	/**
@@ -154,7 +157,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	 */
 	protected function loadLanguage()
 	{
-		$this->load->language("payment/{$this->module_name}");
+		$this->load->language(($this->isVersion30OrAbove() ? "extension/" : "") . "payment/{$this->module_name}");
 	}
 
 	/**
@@ -212,6 +215,26 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	}
 
 	/**
+	 * Get token param
+	 *
+	 * @return string
+	 */
+	public function getToken()
+	{
+		return $this->isVersion30OrAbove() ? $this->session->data['user_token'] : $this->session->data['token'];
+	}
+
+	/**
+	 * Get token param name
+	 *
+	 * @return string
+	 */
+	public function getTokenParam()
+	{
+		return $this->isVersion30OrAbove() ? 'user_token' : 'token';
+	}
+
+	/**
 	 * Processes HTTP POST Index action
 	 *
 	 * @return void
@@ -221,6 +244,16 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 		try {
 			if ($this->validate()) {
 				$this->model_setting_setting->editSetting($this->module_name, $this->request->post);
+
+				// As from 3.x they changed settings name in db.
+				// Save status and sort_order settigns in new format. Other settings are not used from opencart core
+				if ($this->isVersion30OrAbove()) {
+					$settings = array(
+						"payment_{$this->module_name}_status" => $this->request->post["{$this->module_name}_status"],
+						"payment_{$this->module_name}_sort_order" => $this->request->post["{$this->module_name}_sort_order"]
+					);
+					$this->model_setting_setting->editSetting("payment_{$this->module_name}", $settings);
+				}
 
 				$json = array(
 					'success' => 1,
@@ -292,7 +325,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 			"{$this->module_name}_transaction_type"           => $this->getFieldValue("{$this->module_name}_transaction_type"),
 			"{$this->module_name}_total"                      => $this->getFieldValue("{$this->module_name}_total"),
 			"{$this->module_name}_order_status_id"            => $this->getFieldValue("{$this->module_name}_order_status_id"),
-			"{$this->module_name}_failure_order_status_id"    => $this->getFieldValue("{$this->module_name}_failure_order_status_id"),
+			"{$this->module_name}_order_failure_status_id"    => $this->getFieldValue("{$this->module_name}_order_failure_status_id"),
 			"{$this->module_name}_async_order_status_id"      => $this->getFieldValue("{$this->module_name}_async_order_status_id"),
 			"{$this->module_name}_geo_zone_id"                => $this->getFieldValue("{$this->module_name}_geo_zone_id"),
 			"{$this->module_name}_status"                     => $this->getFieldValue("{$this->module_name}_status"),
@@ -307,8 +340,8 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 			"{$this->module_name}_cron_allowed_ip"            => $this->getFieldValue("{$this->module_name}_cron_allowed_ip"),
 			"{$this->module_name}_cron_time_limit"            => $this->getFieldValue("{$this->module_name}_cron_time_limit"),
 
-			'action' => $this->url->link("{$this->route_prefix}payment/{$this->module_name}", 'token=' . $this->session->data['token'], 'SSL'),
-			'cancel' =>	$this->getPaymentLink($this->session->data['token']),
+			'action' => $this->url->link("{$this->route_prefix}payment/{$this->module_name}", $this->getTokenParam() . '=' . $this->getToken(), 'SSL'),
+			'cancel' =>	$this->getPaymentLink($this->getToken()),
 			'header'      => $this->load->controller('common/header'),
 			'column_left' => $this->load->controller('common/column_left'),
 			'footer'      => $this->load->controller('common/footer'),
@@ -339,17 +372,17 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('common/dashboard', $this->getTokenParam() . '=' . $this->getToken(), 'SSL')
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_payment'),
-			'href' => $this->getPaymentLink($this->session->data['token'])
+			'href' => $this->getPaymentLink($this->getToken())
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $heading_title,
-			'href' => $this->url->link("{$this->route_prefix}/payment/{$this->module_name}", 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link("{$this->route_prefix}payment/{$this->module_name}", $this->getTokenParam() . '=' . $this->getToken(), 'SSL')
 		);
 
 		$this->response->setOutput(
@@ -378,6 +411,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 			'text_no',
 			'text_success',
 			'text_failed',
+			'text_select_status',
 
 			'text_log_entry_id',
 			'text_log_order_id',
@@ -437,6 +471,9 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 			'error_token',
 			'error_transaction_type',
 			'error_controls_invalidated',
+			'error_order_status',
+			'error_order_failure_status',
+			'error_async_order_status',
 
 			'alert_disable_recurring',
 		);
@@ -564,8 +601,8 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 					"{$this->module_name}_supports_recurring"        => $this->config->get("{$this->module_name}_supports_recurring"),
 
 					'order_id'                   => $order_id,
-					'token'                      => $this->request->get['token'],
-					'url_modal'                  => htmlspecialchars_decode($this->getModalFormLink($this->session->data['token'])),
+					'token'                      => $this->request->get[$this->getTokenParam()],
+					'url_modal'                  => htmlspecialchars_decode($this->getModalFormLink($this->getToken())),
 					'module_name'                => $this->module_name,
 					'currency'		             => $this->getTemplateCurrencyArray(),
 					'transactions'               => $transactions,
@@ -617,7 +654,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 
 			if ($this->isVersion23OrAbove()) {
 				$url_action = $this->url->link(
-					"extension/payment/{$this->module_name}", "action={$type}&token={$this->session->data['token']}", 'SSL'
+					"extension/payment/{$this->module_name}", "action={$type}&{$this->getTokenParam()}={$this->getToken()}", 'SSL'
 				);
 			} else {
 				$url_action = $this->url->link(
@@ -925,6 +962,56 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	{
 		$this->loadPaymentMethodModel();
 		$this->getModelInstance()->install();
+
+		// Attach events for admin and catalog views
+		if ($this->isVersion30OrAbove()) {
+			$this->load->model('setting/event');
+			$this->model_setting_event->addEvent("payment_{$this->module_name}", 'admin/view/*/before', "extension/payment/{$this->module_name}/overrideTemplateEngine", 1);
+			$this->model_setting_event->addEvent("payment_{$this->module_name}", 'catalog/view/*/before', "extension/payment/{$this->module_name}/overrideTemplateEngine", 1);
+			$this->model_setting_event->addEvent("payment_{$this->module_name}", 'admin/view/*/after', "extension/payment/{$this->module_name}/revertTemplateEngine", 1);
+			$this->model_setting_event->addEvent("payment_{$this->module_name}", 'catalog/view/*/after', "extension/payment/{$this->module_name}/revertTemplateEngine", 1);
+		}
+
+		// Attach event for catalog model
+		if ($this->isVersion23OrAbove() && !$this->isVersion30OrAbove()) {
+			$this->load->model('extension/event');
+			$this->model_extension_event->addEvent("payment_{$this->module_name}", "catalog/model/extension/payment/{$this->module_name}/*/before", "extension/payment/{$this->module_name}/overrideModelRoute", 1);
+		}
+	}
+
+	/**
+	 * Event handler for admin/view/*\/before
+	 * Switch to tpl template engine
+	 *
+	 * @param $route
+	 */
+	public function overrideTemplateEngine(&$route) {
+		if (strpos($route, $this->module_name)) {
+
+			// save original template engine
+			if (!$this->org_template_engine) {
+				$this->org_template_engine = $this->config->get('template_engine');
+			}
+
+			// remove file extension as it is added later in template engine
+			$route = preg_replace('/tpl$/', '', $route);
+
+			$this->config->set('template_engine', 'template');
+		}
+	}
+
+	/**
+	 * Event handler for admin/view/* /after
+	 * Switch back to original template engine
+	 *
+	 * @param $route
+	 */
+	public function revertTemplateEngine(&$route) {
+		if (strpos($route, $this->module_name)) {
+			if ($this->org_template_engine) {
+				$this->config->set('template_engine', $this->org_template_engine);
+			}
+		}
 	}
 
 	/**
@@ -936,6 +1023,15 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	{
 		$this->loadPaymentMethodModel();
 		$this->getModelInstance()->uninstall();
+
+		// delete events
+		if ($this->isVersion30OrAbove()) {
+			$this->load->model('setting/event');
+			$this->model_setting_event->deleteEventByCode("payment_{$this->module_name}");
+		} else if ($this->isVersion23OrAbove()) {
+			$this->load->model('extension/event');
+			$this->model_extension_event->deleteEvent("payment_{$this->module_name}");
+		}
 	}
 
 	/**
@@ -959,6 +1055,18 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 
 		if (@empty($this->request->post["{$this->module_name}_transaction_type"])) {
 			$this->error['transaction_type'] = $this->language->get('error_transaction_type');
+		}
+
+		if (empty($this->request->post["{$this->module_name}_order_status_id"])) {
+			$this->error['order_status'] = $this->language->get('error_order_status');
+		}
+
+		if (empty($this->request->post["{$this->module_name}_order_failure_status_id"])) {
+			$this->error['order_failure_status'] = $this->language->get('error_order_failure_status');
+		}
+
+		if ($this->module_name === 'emerchantpay_direct' && empty($this->request->post["{$this->module_name}_async_order_status_id"])) {
+			$this->error['order_async_status'] = $this->language->get('error_async_order_status');
 		}
 
 		return !$this->error;
@@ -1144,6 +1252,17 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	protected function isVersion23OrAbove()
 	{
 		return defined('VERSION') && version_compare(VERSION, '2.3', '>=');
+	}
+
+	/**
+	 * Determines if the OpenCart Version is 3.0.x.x or above
+	 * Used to build the links in a different way
+	 *
+	 * @return bool
+	 */
+	protected function isVersion30OrAbove()
+	{
+		return defined('VERSION') && version_compare(VERSION, '3.0', '>=');
 	}
 
 	/**
@@ -1390,7 +1509,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 					$log_entry['order_id'] = $row['order_id'];
 					$log_entry['order_link'] = $this->url->link(
 						'sale/order/info',
-						'token=' . $this->session->data['token'] . '&order_id=' . $row['order_id'],
+						$this->getTokenParam() . '=' . $this->getToken() . '&order_id=' . $row['order_id'],
 						true
 					);
 					$log_entry['order_link_title'] = sprintf(
@@ -1400,7 +1519,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 
 					$log_entry['order_recurring_btn_link'] = $this->url->link(
 						'sale/recurring/info',
-						'token=' . $this->session->data['token'] . '&order_recurring_id=' . $row['order_recurring_id'],
+						$this->getTokenParam() . '=' . $this->getToken() . '&order_recurring_id=' . $row['order_recurring_id'],
 						true
 					);
 					$log_entry['order_recurring_btn_title'] = sprintf(
@@ -1529,9 +1648,22 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 				'args'   => 'action=getModalForm&token=' . $token,
 				'secure' => 'SSL'
 			),
+			'3.0'     => array(
+				'route'  => "{$this->route_prefix}payment/{$this->module_name}",
+				'args'   => 'action=getModalForm&user_token=' . $token,
+				'secure' => 'SSL'
+			),
 		);
 
-		return $this->getLink($this->isVersion23OrAbove() ? $link_parameters['2.3'] : $link_parameters['default']);
+		$link = $link_parameters['default'];
+
+		if ($this->isVersion30OrAbove()) {
+			$link = $link_parameters['3.0'];
+		} else if ($this->isVersion23OrAbove()) {
+			$link = $link_parameters['2.3'];
+		}
+
+		return $this->getLink($link);
 	}
 
 	/**
@@ -1553,9 +1685,22 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 				'args'   => 'type=payment&token=' . $token,
 				'secure' => 'SSL'
 			),
+			'3.0'     => array(
+				'route'  => 'marketplace/extension',
+				'args'   => 'type=payment&user_token=' . $token,
+				'secure' => 'SSL'
+			),
 		);
 
-		return $this->getLink($this->isVersion23OrAbove() ? $link_parameters['2.3'] : $link_parameters['default']);
+		$link = $link_parameters['default'];
+
+		if ($this->isVersion30OrAbove()) {
+			$link = $link_parameters['3.0'];
+		} else if ($this->isVersion23OrAbove()) {
+			$link = $link_parameters['2.3'];
+		}
+
+		return $this->getLink($link);
 	}
 
 	/**

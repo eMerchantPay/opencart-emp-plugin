@@ -37,6 +37,7 @@ $_['text_emerchantpay_direct'] = <<<HTML
     <img src="view/image/payment/emerchantpay.png" alt="eMerchantPay" title="eMerchantPay" style="border: 1px solid #EEEEEE;" />
 </a>
 HTML;
+$_['text_select_status']       = 'Select Status';
 
 // Entry
 $_['entry_username']                    = 'Genesis Username';
@@ -153,6 +154,9 @@ $_['error_token']                = 'Genesis Token is Required!';
 $_['error_transaction_type']     = 'You have to select at least one transaction type!';
 $_['error_https']                = 'This payment method requires HTTPS connection in order to process payment data!';
 $_['error_controls_invalidated'] = 'Warning: You have to fill-in all the required fields';
+$_['error_order_status']         = 'Order Status is Required';
+$_['error_order_failure_status'] = 'Order Status (Failed) is Required';
+$_['error_async_order_status']   = 'Order Status (Async) is Required';
 
 //Alert
 $_['alert_disable_recurring']    = 'Warning: Disabling the Recurring Payments disables placing new recurring orders. It does not disable the re-billing of the existing ones.';

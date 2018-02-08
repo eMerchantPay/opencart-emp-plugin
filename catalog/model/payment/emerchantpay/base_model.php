@@ -100,6 +100,17 @@ abstract class ModelPaymentEmerchantPayBase extends Model
 	protected $log_start_timestamp = null;
 
 	/**
+	 * Determines if the OpenCart Version is 3.0.x.x or above
+	 * Used to make recurring in a different way
+	 *
+	 * @return bool
+	 */
+	protected function isVersion30OrAbove()
+	{
+		return defined('VERSION') && version_compare(VERSION, '3.0', '>=');
+	}
+
+	/**
 	 * Determines whether the module supports recurring payments
 	 *
 	 * @return bool
@@ -212,15 +223,28 @@ abstract class ModelPaymentEmerchantPayBase extends Model
 			}
 
 			//create new recurring and set to pending status as no payment has been made yet.
-			$order_recurring_id = $this->model_checkout_recurring->create(
-				$item,
-				$this->session->data['order_id'],
-				$recurring_description
-			);
-			$this->model_checkout_recurring->addReference(
-				$order_recurring_id,
-				$payment_reference
-			);
+			if ($this->isVersion30OrAbove()) {
+				$order_recurring_id = $this->model_checkout_recurring->addRecurring(
+					$this->session->data['order_id'],
+					$recurring_description,
+					$item + $item['recurring']
+				);
+				$this->model_checkout_recurring->editReference(
+					$order_recurring_id,
+					$payment_reference
+				);
+			} else {
+				$order_recurring_id = $this->model_checkout_recurring->create(
+					$item,
+					$this->session->data['order_id'],
+					$recurring_description
+				);
+				$this->model_checkout_recurring->addReference(
+					$order_recurring_id,
+					$payment_reference
+				);
+			}
+
 		}
 	}
 

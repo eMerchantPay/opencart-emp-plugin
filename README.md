@@ -6,7 +6,7 @@ This is a Payment Module for OpenCart, that gives you the ability to process pay
 Requirements
 ------------
 
-* OpenCart 2.0.X - 2.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X)
+* OpenCart 2.0.X - 3.0.2.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X)
 * [GenesisPHP v1.4](https://github.com/GenesisGateway/genesis_php) - (Integrated in Module)
 * PCI-certified server in order to use ```eMerchantPay Direct```
 
@@ -22,9 +22,10 @@ GenesisPHP Requirements
     * [XMLReader](https://php.net/xmlreader)
     * [XMLWriter](https://php.net/xmlwriter)
 
-Installation (via Extension Installer)
+Installation (via Extension Installer - up to 3.x)
 ------------
 1.	Download the __eMerchantPay Payment Gateway__, extract the contents of the folder (excluding ```README.md```) into another empty folder ```upload``` on your local computer.
+- For version 2.0.x exclude folder ```admin/cntroller/extension/payment```
 2.	Create a compressed ```zip``` file of the folder ```upload``` with name ```emerchantpay.ocmod.zip```
 3.  Login inside the __OpenCart Admin Panel__
 4.  Navigate to ```Extensions -> Extension Installer``` and click on button ```Upload``` and choose the ```zip``` file ```emerchantpay.ocmod.zip``` to install the __eMerchantPay Payment Gateway__.
@@ -36,6 +37,7 @@ Installation (Manual)
 ------------
 
 1.  Upload the contents of the folder (excluding ```README.md```) to the ```<root>``` folder of your OpenCart installation
+- For version 2.0.x you will have to delete folder ```admin\controller\extension\payment```
 2.  Login inside the __OpenCart Admin Panel__
 3.  Navigate to ```Extensions -> Payments``` and click install on ```eMerchantPay Direct``` and/or ```eMerchantPay Checkout```
 4.  Set the login credentials (```Username```, ```Password```, ```Token```) and adjust the configuration to your needs.

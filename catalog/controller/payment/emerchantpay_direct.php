@@ -17,13 +17,25 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+if (!class_exists('ControllerPaymentEmerchantPayBase')) {
+	require_once DIR_APPLICATION . "controller/payment/emerchantpay/base_controller.php";
+}
+
 /**
  * Front-end controller for the "eMerchantPay Direct" module
  *
  * @package EMerchantPayDirect
  */
-class ControllerPaymentEmerchantPayDirect extends Controller
+class ControllerPaymentEmerchantPayDirect extends ControllerPaymentEmerchantPayBase
 {
+
+	/**
+	 * Module Name
+	 *
+	 * @var string
+	 */
+	protected $module_name = 'emerchantpay_direct';
+
 	/**
 	 * Init
 	 *
@@ -372,14 +384,16 @@ class ControllerPaymentEmerchantPayDirect extends Controller
 							case \Genesis\API\Constants\Transaction\States::ERROR:
 								$this->model_checkout_order->addOrderHistory(
 									$transaction['order_id'],
-									$this->config->get('emerchantpay_direct_failure_order_status_id'),
+									$this->config->get('emerchantpay_direct_order_failure_status_id'),
 									$this->language->get('text_payment_status_unsuccessful')
 								);
 								break;
 						}
 
-						$this->model_payment_emerchantpay_direct->populateRecurringTransaction($data);
-						$this->model_payment_emerchantpay_direct->updateOrderRecurring($data);
+						if ($this->model_payment_emerchantpay_direct->isRecurringOrder()) {
+							$this->model_payment_emerchantpay_direct->populateRecurringTransaction($data);
+							$this->model_payment_emerchantpay_direct->updateOrderRecurring($data);
+						}
 
 						$this->response->addHeader('Content-Type: text/xml');
 

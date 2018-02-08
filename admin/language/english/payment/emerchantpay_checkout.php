@@ -36,6 +36,7 @@ $_['text_emerchantpay_checkout'] = <<<HTML
     <img src="view/image/payment/emerchantpay.png" alt="eMerchantPay" title="eMerchantPay" style="border: 1px solid #EEEEEE;" />
 </a>
 HTML;
+$_['text_select_status']         = 'Select Status';
 
 // Entry
 $_['entry_username']                    = 'Genesis Username';
@@ -165,6 +166,8 @@ $_['error_username']             = 'Genesis Username is Required!';
 $_['error_password']             = 'Genesis Password is Required!';
 $_['error_transaction_type']     = 'You have to select at least one transaction type!';
 $_['error_controls_invalidated'] = 'Warning: You have to fill-in all the required fields';
+$_['error_order_status']         = 'Order Status is Required';
+$_['error_order_failure_status'] = 'Order Status (Failed) is Required';
 
 //Alert
 $_['alert_disable_recurring']    = 'Warning: Disabling the Recurring Payments disables placing new recurring orders. It does not disable the re-billing of the existing ones.';
