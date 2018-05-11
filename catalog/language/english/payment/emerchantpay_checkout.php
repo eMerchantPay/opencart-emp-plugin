@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2015 eMerchantPay Ltd.
+ * Copyright (C) 2018 emerchantpay Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -12,13 +12,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @author      eMerchantPay
- * @copyright   2015 eMerchantPay Ltd.
+ * @author      emerchantpay
+ * @copyright   2018 emerchantpay Ltd.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
 // Text
-$_['text_title']                  = 'Credit Card / Debit Card (eMerchantPay Checkout)';
+$_['text_title']                  = 'Credit Card / Debit Card (emerchantpay Checkout)';
 $_['text_trial_single_payment']   = '%s for the first %s %s, then ';
 $_['text_trial_multiple_payment'] = '%s every %s %s for %s payments, then ';
 $_['text_recurring']              = '%s every %s %s';
@@ -28,7 +28,7 @@ $_['text_length']                 = ' for %s payments';
 $_['button_shopping_cart'] = 'Go to shopping cart';
 
 // Warnings
-$_['text_payment_mixed_cart_content'] = 'Your order cannot be processed with the eMerchantPay Checkout payment method with the selected shopping cart content. '
+$_['text_payment_mixed_cart_content'] = 'Your order cannot be processed with the emerchantpay Checkout payment method with the selected shopping cart content. '
 	. 'Recurring items cannot be ordered along with other recurring or non-recurring items. '
 	. 'Please split your order on multiple orders placing recurring item(s) separately (one per order).';
 

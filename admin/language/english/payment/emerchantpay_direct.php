@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2016 eMerchantPay Ltd.
+ * Copyright (C) 2018 emerchantpay Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -12,13 +12,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @author      eMerchantPay
- * @copyright   2016 eMerchantPay Ltd.
+ * @author      emerchantpay
+ * @copyright   2018 emerchantpay Ltd.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
 // Heading
-$_['heading_title'] = 'eMerchantPay Direct';
+$_['heading_title'] = 'emerchantpay Direct';
 
 // Tabs
 $_['tab_general']   = 'General settings';
@@ -26,15 +26,15 @@ $_['tab_recurring'] = 'Recurring payments';
 
 // Text
 $_['text_payment']  		   = 'Payment';
-$_['text_success']  		   = 'Success: You have modified your eMerchantPay configuration!';
-$_['text_failed']   		   = 'Failed: An error has occured saving your eMerchantPay configuration!';
-$_['text_edit']     		   = 'Edit eMerchantPay Direct';
+$_['text_success']  		   = 'Success: You have modified your emerchantpay configuration!';
+$_['text_failed']   		   = 'Failed: An error has occured saving your emerchantpay configuration!';
+$_['text_edit']     		   = 'Edit emerchantpay Direct';
 $_['text_yes']      		   = 'Yes';
 $_['text_no']       	       = 'No';
 $_['text_required'] 		   = 'This field is required!';
 $_['text_emerchantpay_direct'] = <<<HTML
 <a href="https://www.emerchantpay.com/" target="_blank">
-    <img src="view/image/payment/emerchantpay.png" alt="eMerchantPay" title="eMerchantPay" style="border: 1px solid #EEEEEE;" />
+    <img src="view/image/payment/emerchantpay.png" alt="emerchantpay" title="emerchantpay" style="border: 1px solid #EEEEEE;" />
 </a>
 HTML;
 $_['text_select_status']       = 'Select Status';
@@ -73,7 +73,7 @@ $_['text_transaction_init_recurring']    = 'Recurring';
 $_['text_transaction_init_recurring_3d'] = 'Recurring 3D-Secure';
 
 // Transaction View
-$_['text_payment_info']          = 'eMerchantPay transactions';
+$_['text_payment_info']          = 'emerchantpay transactions';
 $_['text_transaction_id']        = 'Transaction ID';
 $_['text_transaction_timestamp'] = 'Date/Time';
 $_['text_transaction_amount']    = 'Amount';
@@ -147,7 +147,7 @@ $_['help_cron_allowed_ip']                           = 'The IP address allowed t
 $_['help_cron_last_execution']                       = 'The time the cron / schtasks was last executed.';
 
 // Error
-$_['error_permission']           = 'Warning: You do not have permission to modify payment module eMerchantPay!';
+$_['error_permission']           = 'Warning: You do not have permission to modify payment module emerchantpay!';
 $_['error_username']             = 'Genesis Username is Required!';
 $_['error_password']             = 'Genesis Password is Required!';
 $_['error_token']                = 'Genesis Token is Required!';
