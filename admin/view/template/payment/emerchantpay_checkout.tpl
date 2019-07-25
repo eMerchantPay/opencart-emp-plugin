@@ -108,6 +108,20 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-status">
+                                    <?php echo $entry_wpf_tokenization; ?>
+                                </label>
+                                <div class="col-sm-10 bootstrap-checkbox-holder">
+                                    <input type="hidden" name="emerchantpay_checkout_wpf_tokenization"
+                                           value="<?php echo $emerchantpay_checkout_wpf_tokenization;?>" />
+                                    <input type="checkbox" class="bootstrap-checkbox"
+                                    <?php if ($emerchantpay_checkout_wpf_tokenization) { ?>
+                                    checked="checked"
+                                    <?php } ?>
+                                    />
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label class="col-sm-2 control-label">
                             <span data-toggle="tooltip" title="<?php echo $help_supports_partial_capture; ?>">
                                 <?php echo $entry_supports_partial_capture;?>

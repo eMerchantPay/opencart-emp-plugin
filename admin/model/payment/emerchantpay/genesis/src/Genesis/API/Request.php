@@ -20,7 +20,13 @@
  *
  * @license     http://opensource.org/licenses/MIT The MIT License
  */
+
 namespace Genesis\API;
+
+use Genesis\API\Traits\MagicAccessors;
+use Genesis\API\Validators\Request\Base\Validator as RequestValidator;
+use Genesis\Builder;
+use Genesis\Utils\Common as CommonUtils;
 
 /**
  * Class Request
@@ -29,9 +35,13 @@ namespace Genesis\API;
  *
  * @package    Genesis
  * @subpackage API
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 abstract class Request
 {
+    use MagicAccessors;
+
     /**
      * Store Request's configuration, like URL, Request Type, Transport Layer
      *
@@ -59,6 +69,13 @@ abstract class Request
      * @var \ArrayObject
      */
     protected $requiredFields;
+
+    /**
+     * Store the names of the field values that are Required
+     *
+     * @var \ArrayObject
+     */
+    protected $requiredFieldValues;
 
     /**
      * Store the names of "conditionally" Required fields.
@@ -91,47 +108,27 @@ abstract class Request
     protected $builderContext;
 
     /**
-     * Bootstrap per-request configuration
+     * Interface for request builder
+     *
+     * @var string
      */
-    public function __construct()
+    protected $builderInterface;
+
+    /**
+     * Bootstrap per-request configuration
+     *
+     * @param string $builderInterface Defaults to XML
+     */
+    public function __construct($builderInterface = Builder::XML)
     {
+        $this->builderInterface = $builderInterface;
+
         $this->initConfiguration();
 
         // A request might not always feature 'required' fields
         if (method_exists($this, 'setRequiredFields')) {
             $this->setRequiredFields();
         }
-    }
-
-    /**
-     * Convert Pascal to Camel case and set the correct property
-     *
-     * @param $method
-     * @param $args
-     *
-     * @return $this
-     */
-    public function __call($method, $args)
-    {
-        list($action, $target) = \Genesis\Utils\Common::resolveDynamicMethod($method);
-
-        switch ($action) {
-            case 'get':
-                if (property_exists($this, $target)) {
-                    return $this->$target;
-                }
-
-                break;
-            case 'set':
-                if (property_exists($this, $target)) {
-                    $this->$target = trim(reset($args));
-                    return $this;
-                }
-
-                break;
-        }
-
-        return $this;
     }
 
     /**
@@ -144,7 +141,7 @@ abstract class Request
         $this->processRequestParameters();
 
         if ($this->treeStructure instanceof \ArrayObject) {
-            $this->builderContext = new \Genesis\Builder();
+            $this->builderContext = new \Genesis\Builder($this->builderInterface);
             $this->builderContext->parseStructure($this->treeStructure->getArrayCopy());
 
             return $this->builderContext->getDocument();
@@ -173,7 +170,6 @@ abstract class Request
         $this->checkRequirements();
     }
 
-
     /**
      * Remove empty keys/values from the structure
      *
@@ -183,7 +179,7 @@ abstract class Request
     {
         if ($this->treeStructure instanceof \ArrayObject) {
             $this->treeStructure->exchangeArray(
-                \Genesis\Utils\Common::emptyValueRecursiveRemoval(
+                CommonUtils::emptyValueRecursiveRemoval(
                     $this->treeStructure->getArrayCopy()
                 )
             );
@@ -199,6 +195,8 @@ abstract class Request
     protected function checkRequirements()
     {
         $this->verifyFieldRequirements();
+
+        $this->verifyFieldValuesRequirements();
 
         $this->verifyGroupRequirements();
 
@@ -230,6 +228,57 @@ abstract class Request
     }
 
     /**
+     * Verify that all required fields are populated with expected values
+     *
+     * @throws \Genesis\Exceptions\ErrorParameter
+     */
+    protected function verifyFieldValuesRequirements()
+    {
+        if (!isset($this->requiredFieldValues)) {
+            return;
+        }
+
+        $iterator = $this->requiredFieldValues->getArrayCopy();
+
+        foreach ($iterator as $fieldName => $validator) {
+            if ($validator instanceof RequestValidator) {
+                $validator->run($this, $fieldName);
+
+                continue;
+            }
+
+            if (CommonUtils::isValidArray($validator)) {
+                if (!in_array($this->$fieldName, $validator)) {
+                    throw new \Genesis\Exceptions\ErrorParameter(
+                        sprintf(
+                            'Required parameter %s is set to %s, but expected to be one of (%s)',
+                            $fieldName,
+                            $this->$fieldName,
+                            implode(
+                                ', ',
+                                CommonUtils::getSortedArrayByValue($validator)
+                            )
+                        )
+                    );
+                }
+
+                continue;
+            }
+
+            if ($this->$fieldName !== $validator) {
+                throw new \Genesis\Exceptions\ErrorParameter(
+                    sprintf(
+                        'Required parameter %s is set to %s, but expected to be %s',
+                        $fieldName,
+                        $this->$fieldName,
+                        $validator
+                    )
+                );
+            }
+        }
+    }
+
+    /**
      * Verify that the group fields in the request are populated
      *
      * @throws \Genesis\Exceptions\ErrorParameter
@@ -240,7 +289,7 @@ abstract class Request
             $fields = $this->requiredFieldsGroups->getArrayCopy();
 
             $emptyFlag = false;
-            $groupsFormatted = array();
+            $groupsFormatted = [];
 
             foreach ($fields as $group => $groupFields) {
                 $groupsFormatted[] = sprintf(
@@ -276,25 +325,53 @@ abstract class Request
      * Verify that all fields (who depend on previously populated fields) are populated
      *
      * @throws \Genesis\Exceptions\ErrorParameter
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     protected function verifyConditionalRequirements()
     {
-        if (isset($this->requiredFieldsConditional)) {
-            $fields = $this->requiredFieldsConditional->getArrayCopy();
+        if (!isset($this->requiredFieldsConditional)) {
+            return;
+        }
 
-            foreach ($fields as $fieldName => $fieldDependencies) {
-                if (isset($this->$fieldName) && !empty($this->$fieldName)) {
-                    foreach ($fieldDependencies as $field) {
+        $fields = $this->requiredFieldsConditional->getArrayCopy();
+
+        foreach ($fields as $fieldName => $fieldDependencies) {
+            if (!isset($this->$fieldName)) {
+                continue;
+            }
+
+            foreach ($fieldDependencies as $fieldValue => $fieldDependency) {
+                if (is_array($fieldDependency)) {
+                    if ($this->$fieldName != $fieldValue) {
+                        continue;
+                    }
+
+                    foreach ($fieldDependency as $field) {
                         if (empty($this->$field)) {
+                            $fieldValue =
+                                is_bool($this->$fieldName)
+                                    ? var_export($this->$fieldName, true)
+                                    : $this->$fieldName;
+
                             throw new \Genesis\Exceptions\ErrorParameter(
                                 sprintf(
-                                    '%s is depending on: %s, which is empty (null)!',
+                                    '%s with value %s is depending on: %s, which is empty (null)!',
                                     $fieldName,
+                                    $fieldValue,
                                     $field
                                 )
                             );
                         }
                     }
+                } elseif (empty($this->$fieldDependency)) {
+                    throw new \Genesis\Exceptions\ErrorParameter(
+                        sprintf(
+                            '%s is depending on: %s, which is empty (null)!',
+                            $fieldName,
+                            $fieldDependency
+                        )
+                    );
                 }
             }
         }
@@ -336,10 +413,10 @@ abstract class Request
      */
     protected function transform($method, $args, $prefix = 'transform')
     {
-        $method = $prefix . \Genesis\Utils\Common::snakeCaseToCamelCase($method);
+        $method = $prefix . CommonUtils::snakeCaseToCamelCase($method);
 
         if (method_exists($this, $method)) {
-            $result = call_user_func_array(array($this, $method), $args);
+            $result = call_user_func_array([$this, $method], $args);
 
             if ($result) {
                 return $result;
@@ -401,7 +478,12 @@ abstract class Request
         $path     = ($token) ? sprintf('%s/%s/', $path, $token) : $path;
 
         return sprintf(
-            '%s://%s%s:%s/%s', $protocol, $sub, $domain, $port, $path
+            '%s://%s%s:%s/%s',
+            $protocol,
+            $sub,
+            $domain,
+            $port,
+            $path
         );
     }
 
@@ -422,7 +504,59 @@ abstract class Request
      */
     protected function initConfiguration()
     {
+    }
 
+    /**
+     * Configures a Secured Post Request with Xml body
+     *
+     * @return void
+     */
+    protected function initXmlConfiguration()
+    {
+        $this->config = CommonUtils::createArrayObject(
+            [
+                'protocol' => 'https',
+                'port'     => 443,
+                'type'     => 'POST',
+                'format'   => Builder::XML
+            ]
+        );
+    }
+
+    /**
+     * Configures a Secured Post Request with Json body
+     *
+     * @return void
+     */
+    protected function initJsonConfiguration()
+    {
+        $this->config = CommonUtils::createArrayObject(
+            [
+                'protocol' => 'https',
+                'port'     => 443,
+                'type'     => 'POST',
+                'format'   => Builder::JSON
+            ]
+        );
+    }
+
+    /**
+     * Initializes Api EndPoint Url with request path & terminal token
+     *
+     * @param string $requestPath
+     * @param bool $includeToken
+     * @return void
+     */
+    protected function initApiGatewayConfiguration($requestPath = 'process', $includeToken = true)
+    {
+        $this->setApiConfig(
+            'url',
+            $this->buildRequestURL(
+                'gateway',
+                $requestPath,
+                ($includeToken ? \Genesis\Config::getToken() : false)
+            )
+        );
     }
 
     /**
@@ -430,7 +564,6 @@ abstract class Request
      */
     protected function setRequiredFields()
     {
-
     }
 
     /**
@@ -439,6 +572,5 @@ abstract class Request
      */
     protected function populateStructure()
     {
-
     }
 }

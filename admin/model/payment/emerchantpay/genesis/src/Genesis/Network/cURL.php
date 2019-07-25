@@ -30,7 +30,7 @@ namespace Genesis\Network;
  * @subpackage Network
  */
 // @codingStandardsIgnoreStart
-class cURL implements \Genesis\Interfaces\Network
+class cURL extends Base
 // @codingStandardsIgnoreEnd
 {
     /**
@@ -39,27 +39,6 @@ class cURL implements \Genesis\Interfaces\Network
      * @var resource
      */
     private $curlHandle;
-
-    /**
-     * Storing the full incoming response
-     *
-     * @var string
-     */
-    private $response;
-
-    /**
-     * Storing body from an incoming response
-     *
-     * @var string
-     */
-    private $responseBody;
-
-    /**
-     * Storing headers from an incoming response
-     *
-     * @var string
-     */
-    private $responseHeaders;
 
     /**
      * Initialize cURL
@@ -80,56 +59,27 @@ class cURL implements \Genesis\Interfaces\Network
     }
 
     /**
-     * Get Body/Headers from an incoming response
-     *
-     * @return mixed
-     */
-    public function getResponse()
-    {
-        return $this->response;
-    }
-
-    /**
-     * Get Headers from an incoming response
-     *
-     * @return mixed
-     */
-    public function getResponseHeaders()
-    {
-        return $this->responseHeaders;
-    }
-
-    /**
-     * Get Body from an incoming response
-     *
-     * @return mixed
-     */
-    public function getResponseBody()
-    {
-        return $this->responseBody;
-    }
-
-    /**
      * Set cURL headers/options, based on the request data
      *
      * @param array $requestData
      *
      * @return void
+     * @throws \Genesis\Exceptions\InvalidArgument
      */
     public function prepareRequestBody($requestData)
     {
-        $options = array(
+        $options = [
             CURLOPT_URL            => $requestData['url'],
             CURLOPT_TIMEOUT        => $requestData['timeout'],
             CURLOPT_USERAGENT      => $requestData['user_agent'],
             CURLOPT_USERPWD        => $requestData['user_login'],
             CURLOPT_HTTPAUTH       => CURLAUTH_BASIC,
             CURLOPT_ENCODING       => 'gzip',
-            CURLOPT_HTTPHEADER     => array(
-                'Content-Type: text/xml',
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: ' . $this->getRequestContentType($requestData['format']),
                 // Workaround to prevent cURL from parsing HTTP 100 as separate request
                 'Expect:'
-            ),
+            ],
             CURLOPT_HEADER         => true,
             CURLOPT_FAILONERROR    => true,
             CURLOPT_FRESH_CONNECT  => true,
@@ -137,14 +87,14 @@ class cURL implements \Genesis\Interfaces\Network
             // SSL/TLS Configuration
             CURLOPT_CAINFO         => $requestData['ca_bundle'],
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-        );
+            CURLOPT_SSL_VERIFYHOST => 2
+        ];
 
         if ('POST' == strtoupper($requestData['type'])) {
-            $post = array(
+            $post = [
                 CURLOPT_POST       => true,
                 CURLOPT_POSTFIELDS => $requestData['body']
-            );
+            ];
 
             $options = $options + $post;
         }

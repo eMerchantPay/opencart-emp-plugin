@@ -30,7 +30,7 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = "1.4.2";
+	protected $module_version = '1.4.3';
 
 	/**
 	 * Perform installation logic
@@ -55,6 +55,15 @@ class ModelPaymentEmerchantPayCheckout extends Model
 			  `currency` CHAR(3) NULL,
 			  PRIMARY KEY (`unique_id`)
 			) ENGINE=MyISAM DEFAULT COLLATE=utf8_general_ci;
+		");
+		$this->db->query("
+			CREATE TABLE `" . DB_PREFIX . "emerchantpay_checkout_consumers` (
+			  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+			  `customer_email` varchar(255) NOT NULL,
+			  `consumer_id` int(10) unsigned NOT NULL,
+			  PRIMARY KEY (`id`),
+			  UNIQUE KEY `customer_email` (`customer_email`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Tokenization consumers in Genesis';
 		");
 		$this->db->query("
 			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "emerchantpay_checkout_cronlog` (
@@ -477,10 +486,6 @@ class ModelPaymentEmerchantPayCheckout extends Model
 			\Genesis\API\Constants\Transaction\Types::SOFORT        => array(
 				'id'   => \Genesis\API\Constants\Transaction\Types::SOFORT,
 				'name' => $this->language->get('text_transaction_sofort')
-			),
-			\Genesis\API\Constants\Payment\Methods::TELEINGRESO     => array(
-				'id'   => \Genesis\API\Constants\Payment\Methods::TELEINGRESO,
-				'name' => $this->language->get('text_transaction_teleingreso')
 			),
 			\Genesis\API\Constants\Payment\Methods::TRUST_PAY       => array(
 				'id'   => \Genesis\API\Constants\Payment\Methods::TRUST_PAY,

@@ -44,6 +44,7 @@ $_['entry_password']                    = 'Genesis Password';
 $_['entry_token']                       = 'Genesis Token';
 $_['entry_sandbox']                     = 'Test Mode';
 $_['entry_transaction_type']            = 'Transaction Types';
+$_['entry_wpf_tokenization']            = 'WPF Tokenization Enabled';
 $_['entry_supports_partial_capture']    = 'Partial Capture';
 $_['entry_supports_partial_refund']     = 'Partial Refund';
 $_['entry_supports_void']               = 'Cancel Transaction';
@@ -82,7 +83,6 @@ $_['text_transaction_poli']                = 'POLi';
 $_['text_transaction_sale']                = 'Sale (Authorize + Capture)';
 $_['text_transaction_sale_3d']             = 'Sale (Authorize + Capture) 3D-Secure';
 $_['text_transaction_sofort']              = 'SOFORT';
-$_['text_transaction_teleingreso']         = 'teleingreso';
 $_['text_transaction_trust_pay']           = 'TrustPay';
 $_['text_transaction_webmoney']            = 'WebMoney';
 

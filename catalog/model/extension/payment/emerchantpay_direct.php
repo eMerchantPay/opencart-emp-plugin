@@ -22,9 +22,9 @@ if (!class_exists('ModelPaymentEmerchantPayDirect')) {
 }
 
 /**
- * Front-end model for the "emerchantpay Checkout" module (3.0.x and above)
+ * Front-end model for the "emerchantpay Direct" module (3.0.x and above)
  *
- * @package EMerchantPayCheckout
+ * @package EMerchantPayDirect
  */
 class ModelExtensionPaymentEmerchantPayDirect extends ModelPaymentEmerchantPayDirect
 {

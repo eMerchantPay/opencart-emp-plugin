@@ -25,7 +25,7 @@ GenesisPHP Requirements
 Installation (via Extension Installer - up to 3.x)
 ------------
 1.	Download the __emerchantpay Payment Gateway__, extract the contents of the folder (excluding ```README.md```) into another empty folder ```upload``` on your local computer.
-- For version 2.0.x exclude folder ```admin/cntroller/extension/payment```
+- For version 2.0.x exclude folder ```admin/controller/extension/payment```
 2.	Create a compressed ```zip``` file of the folder ```upload``` with name ```emerchantpay.ocmod.zip```
 3.  Login inside the __OpenCart Admin Panel__
 4.  Navigate to ```Extensions -> Extension Installer``` and click on button ```Upload``` and choose the ```zip``` file ```emerchantpay.ocmod.zip``` to install the __emerchantpay Payment Gateway__.

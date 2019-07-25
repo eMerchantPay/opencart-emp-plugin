@@ -22,9 +22,9 @@ if (!class_exists('ControllerPaymentEmerchantPayCheckout')) {
 }
 
 /**
- * Front-end controller for the "emerchantpay Direct" module (2.3.x and above)
+ * Front-end controller for the "emerchantpay Checkout" module (2.3.x and above)
  *
- * @package EMerchantPayDirect
+ * @package EMerchantPayCheckout
  */
 class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerPaymentEmerchantPayCheckout
 {

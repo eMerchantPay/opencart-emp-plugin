@@ -22,14 +22,47 @@
  */
 namespace Genesis\API\Request\WPF;
 
+use Genesis\API\Constants\Transaction\Types;
+use Genesis\API\Traits\Request\Financial\PaymentAttributes;
+use Genesis\API\Traits\Request\AddressInfoAttributes;
+use Genesis\API\Traits\Request\Financial\AsyncAttributes;
+use Genesis\API\Traits\Request\Financial\NotificationAttributes;
+use Genesis\API\Traits\Request\RiskAttributes;
+use Genesis\API\Traits\Request\Financial\DescriptorAttributes;
+use Genesis\Exceptions\ErrorParameter;
+use Genesis\Exceptions\InvalidArgument;
+use Genesis\Utils\Common as CommonUtils;
+
 /**
  * Web-Payment-Form Request
  *
  * @package    Genesis
  * @subpackage Request
+ *
+ * @method $this setTransactionId($value) Set a Unique Transaction id
+ * @method $this setUsage($value) Set the description of the transaction for later use
+ * @method $this setDescription($value) Set a text describing the reason of the payment
+ * @method $this setReturnCancelUrl($value) Set the  URL where the customer is sent to after they cancel the payment
+ * @method $this setConsumerId($value) Saved cards will be listed for user to select
+ * @method string getTransactionId()
+ * @method string getUsage()
+ * @method string getDescription()
+ * @method string getReturnCancelUrl()
+ * @method bool getRememberCard()
+ * @method string getConsumerId()
+ * @method string getLifetime()
+ * @method string getReminders()
  */
 class Create extends \Genesis\API\Request
 {
+    use PaymentAttributes, AddressInfoAttributes, AsyncAttributes,
+        NotificationAttributes, RiskAttributes, DescriptorAttributes;
+
+    const REMINDERS_CHANNEL_EMAIL      = 'email';
+    const REMINDERS_CHANNEL_SMS        = 'sms';
+    const MIN_ALLOWED_REMINDER_MINUTES = 1;
+    const MAX_ALLOWED_REMINDER_DAYS    = 31;
+
     /**
      * unique transaction id defined by merchant
      *
@@ -38,25 +71,26 @@ class Create extends \Genesis\API\Request
     protected $transaction_id;
 
     /**
-     * Amount of transaction in minor currency unit
-     *
-     * @var int
-     */
-    protected $amount;
-
-    /**
-     * Currency code in ISO-4217
-     *
-     * @var string
-     */
-    protected $currency;
-
-    /**
      * Statement, as it appears in the customer’s bank statement
      *
      * @var string
      */
     protected $usage;
+
+    /**
+     * Check documentation section Tokenize. Offer the user the option to save
+     * cardholder details for future use (tokenize).
+     *
+     * @var string
+     */
+    protected $remember_card = false;
+
+    /**
+     * Check documentation section Consumers and Tokenization. Saved cards will be listed for user to select
+     *
+     * @var string
+     */
+    protected $consumer_id;
 
     /**
      * a text describing the reason of the payment
@@ -68,41 +102,6 @@ class Create extends \Genesis\API\Request
     protected $description;
 
     /**
-     * Email address of the Customer
-     *
-     * @var string
-     */
-    protected $customer_email;
-
-    /**
-     * Phone number of the customer
-     *
-     * @var string
-     */
-    protected $customer_phone;
-
-    /**
-     * URL endpoint for Genesis Notifications
-     *
-     * @var string
-     */
-    protected $notification_url;
-
-    /**
-     * URL where customer is sent to after successful payment
-     *
-     * @var string
-     */
-    protected $return_success_url;
-
-    /**
-     * URL where customer is sent to after un-successful payment
-     *
-     * @var string
-     */
-    protected $return_failure_url;
-
-    /**
      * URL where the customer is sent to after they cancel the payment
      *
      * @var string
@@ -110,201 +109,134 @@ class Create extends \Genesis\API\Request
     protected $return_cancel_url;
 
     /**
-     *Customer's Billing Address: First name
+     * Number of minutes determining how long the WPF will be valid.
+     * Will be set to 30 minutes by default.
+     * Valid value ranges between 1 minute and 31 days given in minutes
      *
-     * @var string
+     * @var int
      */
-    protected $billing_first_name;
+    protected $lifetime;
 
     /**
-     * Customer's Billing Address: Last name
+     * Signifies whether the ’Pay Later’ feature would be enabled on the WPF
      *
-     * @var string
+     * @var bool
      */
-    protected $billing_last_name;
+    protected $pay_later = false;
 
     /**
-     * Customer's Billing Address: Part 1
-     *
-     * @var string
+     * @var array
      */
-    protected $billing_address1;
-
-    /**
-     * Customer's Billing Address: Part 2
-     * @var string
-     */
-    protected $billing_address2;
-
-    /**
-     * Customer's Billing Address: ZIP
-     *
-     * @var string
-     */
-    protected $billing_zip_code;
-
-    /**
-     * Customer's Billing Address: City
-     *
-     * @var string
-     */
-    protected $billing_city;
-
-    /**
-     * Customer's Billing Address: State
-     *
-     * format: ISO-3166-2
-     *
-     * @var string
-     */
-    protected $billing_state;
-
-    /**
-     * Customer's Billing Address: Country
-     *
-     * format: ISO-3166
-     *
-     * @var string
-     */
-    protected $billing_country;
-
-    /**
-     * Customer's Shipping Address: First name
-     *
-     * @var string
-     */
-    protected $shipping_first_name;
-
-    /**
-     * Customer's Shipping Address: Last name
-     *
-     * @var string
-     */
-    protected $shipping_last_name;
-
-    /**
-     * Customer's Shipping Address: Part 1
-     *
-     * @var string
-     */
-    protected $shipping_address1;
-
-    /**
-     * Customer's Shipping Address: Part 2
-     *
-     * @var string
-     */
-    protected $shipping_address2;
-
-    /**
-     * Customer's Shipping Address: ZIP
-     *
-     * @var string
-     */
-    protected $shipping_zip_code;
-
-    /**
-     * Customer's Shipping Address: City
-     *
-     * @var string
-     */
-    protected $shipping_city;
-
-    /**
-     * Customer's Shipping Address: State
-     *
-     * format: ISO-3166-2
-     *
-     * @var string
-     */
-    protected $shipping_state;
-
-    /**
-     * Customer's Shipping Address
-     *
-     * format: ISO-3166
-     *
-     * @var string
-     */
-    protected $shipping_country;
+    protected $reminders = [];
 
     /**
      * The transaction types that the merchant is willing to accept payments for
      *
      * @var array
      */
-    protected $transaction_types = array();
+    protected $transaction_types = [];
 
     /**
-     * Social Security number or equivalent value for non US customers.
+     * @param bool $flag
      *
-     * @var string
+     * @return Create
      */
-    protected $risk_ssn;
+    public function setRememberCard($flag)
+    {
+        $this->remember_card = (bool) $flag;
+
+        return $this;
+    }
 
     /**
-     * Customer's MAC address
-     *
-     * @var string
+     * Number of minutes determining how long the WPF will be valid.
+     * Will be set to 30 minutes by default.
+     * Valid value ranges between 1 minute and 31 days given in minutes
+     * @param int $lifetime
+     * @throws InvalidArgument
+     * @return $this
      */
-    protected $risk_mac_address;
+    public function setLifetime($lifetime)
+    {
+        $lifetime = intval($lifetime);
+
+        if ($lifetime < 1 || $lifetime > 44640) {
+            throw new InvalidArgument('Valid value ranges between 1 minute and 31 days given in minutes');
+        }
+
+        $this->lifetime = $lifetime;
+
+        return $this;
+    }
 
     /**
-     * Customer's Session Id
+     * @param bool $flag
      *
-     * @var string
+     * @return Create
      */
-    protected $risk_session_id;
+    public function setPayLater($flag)
+    {
+        $this->pay_later = (bool) $flag;
+
+        return $this;
+    }
 
     /**
-     * Customer's User Id
+     * @param $channel
+     * @param $after
      *
-     * @var string
+     * @return Create
+     * @throws ErrorParameter
      */
-    protected $risk_user_id;
+    public function addReminder($channel, $after)
+    {
+        if (count($this->reminders) === 3) {
+            throw new ErrorParameter(
+                'Maximum number of 3 allowed reminders reached. You can\'t add more reminders.'
+            );
+        }
+
+        $after = (int) $after;
+
+        if ($after < self::MIN_ALLOWED_REMINDER_MINUTES || $after > self::MAX_ALLOWED_REMINDER_DAYS * 24 * 60) {
+            throw new ErrorParameter('After parameter must be between 1 minute and 31 days in minutes.');
+        }
+
+        $allowedChannels = [self::REMINDERS_CHANNEL_EMAIL, self::REMINDERS_CHANNEL_SMS];
+
+        if (!in_array($channel, $allowedChannels)) {
+            throw new ErrorParameter('Invalid channel value. Allowed are ' . implode(', ', $allowedChannels));
+        }
+
+        $this->reminders[] = [
+            'reminder' => [
+                'channel' => $channel,
+                'after'   => $after
+            ]
+        ];
+
+        return $this;
+    }
 
     /**
-     * Customer's User Level
-     *
-     * @var string
+     * Clears all reminders
      */
-    protected $risk_user_level;
+    public function clearReminders()
+    {
+        $this->reminders = [];
+    }
 
     /**
-     * Customer's Email address
-     *
-     * @note Set here if different from
-     *       shipping / billing
-     *
-     * @var string
+     * @return array
      */
-    protected $risk_email;
+    protected function getRemindersStructure()
+    {
+        if ($this->pay_later === false) {
+            return [];
+        }
 
-    /**
-     * Customer's Phone number
-     *
-     * @note Set here if different from
-     *       shipping / billing
-     *
-     * @var string
-     */
-    protected $risk_phone;
-
-    /**
-     * Customer's IP address
-     *
-     * @note Set here if different from remote_ip
-     *
-     * @var string
-     */
-    protected $risk_remote_ip;
-
-    /**
-     * Customer's Serial Number
-     *
-     * @var string
-     */
-    protected $risk_serial_number;
+        return $this->reminders;
+    }
 
     /**
      * Add transaction type to the list of available types
@@ -315,20 +247,187 @@ class Create extends \Genesis\API\Request
      *
      * @return $this
      */
-    public function addTransactionType($name, $parameters = array())
+    public function addTransactionType($name, $parameters = [])
     {
-        $structure = array(
-            'transaction_type' => array(
-                '@attributes' => array(
+        $this->verifyTransactionType($name, $parameters);
+
+        $structure = [
+            'transaction_type' => [
+                '@attributes' => [
                     'name' => $name
-                ),
+                ],
                 $parameters
-            )
-        );
+            ]
+        ];
 
         array_push($this->transaction_types, $structure);
 
         return $this;
+    }
+
+    /**
+     * Verify that transaction type parameters are populated correctly
+     *
+     * @param string $transactionType
+     * @param array $parameters
+     * @throws \Genesis\Exceptions\ErrorParameter
+     */
+    protected function verifyTransactionType($transactionType, $parameters = [])
+    {
+        if (!Types::isValidWPFTransactionType($transactionType)) {
+            throw new \Genesis\Exceptions\ErrorParameter(
+                sprintf(
+                    'Transaction type (%s) is not valid. Valid WPF transactions are: %s.',
+                    $transactionType,
+                    implode(', ', Types::getWPFTransactionTypes())
+                )
+            );
+        }
+
+        $txnCustomRequiredParams = Types::getCustomRequiredParameters(
+            $transactionType
+        );
+
+        if (!CommonUtils::isValidArray($txnCustomRequiredParams)) {
+            return;
+        }
+
+        $txnCustomRequiredParams = static::validateNativeCustomParameters($transactionType, $txnCustomRequiredParams);
+
+        if (CommonUtils::isValidArray($txnCustomRequiredParams) && !CommonUtils::isValidArray($parameters)) {
+            throw new \Genesis\Exceptions\ErrorParameter(
+                sprintf(
+                    'Custom transaction parameters (%s) are required and none are set.',
+                    implode(', ', array_keys($txnCustomRequiredParams))
+                )
+            );
+        }
+
+        foreach ($txnCustomRequiredParams as $customRequiredParam => $customRequiredParamValues) {
+            $this->validateRequiredParameter(
+                $transactionType,
+                $customRequiredParam,
+                $customRequiredParamValues,
+                $parameters
+            );
+        }
+    }
+
+    /**
+     * @param string $transactionType
+     * @param array $txnCustomRequiredParams
+     *
+     * @return array
+     */
+    protected function validateNativeCustomParameters($transactionType, $txnCustomRequiredParams)
+    {
+        foreach ($txnCustomRequiredParams as $customRequiredParam => $customRequiredParamValues) {
+            if (property_exists($this, $customRequiredParam)) {
+                $this->validateRequiredParameter(
+                    $transactionType,
+                    $customRequiredParam,
+                    $customRequiredParamValues,
+                    [ $customRequiredParam => $this->{$customRequiredParam} ]
+                );
+
+                unset($txnCustomRequiredParams[$customRequiredParam]);
+            }
+        }
+
+        return $txnCustomRequiredParams;
+    }
+
+    protected function validateRequiredParameter(
+        $transactionType,
+        $customRequiredParam,
+        $customRequiredParamValues,
+        $parameters
+    ) {
+        $this->checkEmptyRequiredParamsFor(
+            $transactionType,
+            $customRequiredParam,
+            $parameters
+        );
+
+        if (!CommonUtils::isValidArray($customRequiredParamValues)) {
+            return;
+        }
+
+        if (!CommonUtils::arrayContainsArrayItems($parameters)) {
+            $this->checkIsParamSet(
+                $transactionType,
+                $parameters[$customRequiredParam],
+                $customRequiredParamValues
+            );
+
+            return;
+        }
+
+        foreach ($parameters as $parameter) {
+            $this->checkIsParamSet(
+                $transactionType,
+                $parameter[$customRequiredParam],
+                $customRequiredParamValues
+            );
+        }
+    }
+
+    /**
+     * @param string $transactionType
+     * @param array $parameters
+     * @param mixed $paramValues
+     *
+     * @throws \Genesis\Exceptions\ErrorParameter
+     */
+    private function checkIsParamSet($transactionType, $parameters, $paramValues)
+    {
+        if (!in_array($parameters, $paramValues)) {
+            throw new \Genesis\Exceptions\ErrorParameter(
+                sprintf(
+                    'Invalid value (%s) for required parameter: %s (Transaction type: %s)',
+                    $parameters,
+                    $paramValues,
+                    $transactionType
+                )
+            );
+        }
+    }
+
+    /**
+     * Performs a check there is an empty required param for the passed transaction type
+     *
+     * @param string $transactionType
+     * @param string $customRequiredParam
+     * @param array $txnParameters
+     *
+     * @throws \Genesis\Exceptions\ErrorParameter
+     */
+    protected function checkEmptyRequiredParamsFor(
+        $transactionType,
+        $customRequiredParam,
+        $txnParameters = []
+    ) {
+        if (CommonUtils::isArrayKeyExists($customRequiredParam, $txnParameters) &&
+            !empty($txnParameters[$customRequiredParam])
+        ) {
+            return;
+        }
+
+        foreach ($txnParameters as $parameter) {
+            if (CommonUtils::isArrayKeyExists($customRequiredParam, $parameter) &&
+                !empty($parameter[$customRequiredParam])
+            ) {
+                return;
+            }
+        }
+
+        throw new \Genesis\Exceptions\ErrorParameter(
+            sprintf(
+                'Empty (null) required parameter: %s for transaction type %s',
+                $customRequiredParam,
+                $transactionType
+            )
+        );
     }
 
     /**
@@ -370,14 +469,7 @@ class Create extends \Genesis\API\Request
      */
     protected function initConfiguration()
     {
-        $this->config = \Genesis\Utils\Common::createArrayObject(
-            array(
-                'protocol' => 'https',
-                'port'     => 443,
-                'type'     => 'POST',
-                'format'   => 'xml',
-            )
-        );
+        $this->initXmlConfiguration();
 
         $this->setApiConfig('url', $this->buildRequestURL('wpf', 'wpf', false));
     }
@@ -389,7 +481,7 @@ class Create extends \Genesis\API\Request
      */
     protected function setRequiredFields()
     {
-        $requiredFields = array(
+        $requiredFields = [
             'transaction_id',
             'amount',
             'currency',
@@ -398,10 +490,23 @@ class Create extends \Genesis\API\Request
             'return_success_url',
             'return_failure_url',
             'return_cancel_url',
-            'transaction_types',
-        );
+            'transaction_types'
+        ];
 
         $this->requiredFields = \Genesis\Utils\Common::createArrayObject($requiredFields);
+
+        $requiredFieldsConditional = [
+            'remember_card' => [
+                true => [
+                    'customer_email'
+                ]
+            ],
+            'consumer_id'   => [
+                'customer_email'
+            ]
+        ];
+
+        $this->requiredFieldsConditional = CommonUtils::createArrayObject($requiredFieldsConditional);
     }
 
     /**
@@ -411,59 +516,37 @@ class Create extends \Genesis\API\Request
      */
     protected function populateStructure()
     {
-        $treeStructure = array(
-            'wpf_payment' => array(
-                'transaction_id'     => $this->transaction_id,
-                'amount'             => $this->transform(
+        $treeStructure = [
+            'wpf_payment' => [
+                'transaction_id'            => $this->transaction_id,
+                'amount'                    => $this->transform(
                     'amount',
-                    array(
+                    [
                         $this->amount,
-                        $this->currency,
-                    )
+                        $this->currency
+                    ]
                 ),
-                'currency'           => $this->currency,
-                'usage'              => $this->usage,
-                'description'        => $this->description,
-                'customer_email'     => $this->customer_email,
-                'customer_phone'     => $this->customer_phone,
-                'notification_url'   => $this->notification_url,
-                'return_success_url' => $this->return_success_url,
-                'return_failure_url' => $this->return_failure_url,
-                'return_cancel_url'  => $this->return_cancel_url,
-                'billing_address'    => array(
-                    'first_name' => $this->billing_first_name,
-                    'last_name'  => $this->billing_last_name,
-                    'address1'   => $this->billing_address1,
-                    'address2'   => $this->billing_address2,
-                    'zip_code'   => $this->billing_zip_code,
-                    'city'       => $this->billing_city,
-                    'state'      => $this->billing_state,
-                    'country'    => $this->billing_country,
-                ),
-                'shipping_address'   => array(
-                    'first_name' => $this->shipping_first_name,
-                    'last_name'  => $this->shipping_last_name,
-                    'address1'   => $this->shipping_address1,
-                    'address2'   => $this->shipping_address2,
-                    'zip_code'   => $this->shipping_zip_code,
-                    'city'       => $this->shipping_city,
-                    'state'      => $this->shipping_state,
-                    'country'    => $this->shipping_country,
-                ),
-                'transaction_types'  => $this->transaction_types,
-                'risk_params'        => array(
-                    'ssn'           => $this->risk_ssn,
-                    'mac_address'   => $this->risk_mac_address,
-                    'session_id'    => $this->risk_session_id,
-                    'user_id'       => $this->risk_user_id,
-                    'user_level'    => $this->risk_user_level,
-                    'email'         => $this->risk_email,
-                    'phone'         => $this->risk_phone,
-                    'remote_ip'     => $this->risk_remote_ip,
-                    'serial_number' => $this->risk_serial_number,
-                ),
-            )
-        );
+                'currency'                  => $this->currency,
+                'usage'                     => $this->usage,
+                'description'               => $this->description,
+                'consumer_id'               => $this->consumer_id,
+                'customer_email'            => $this->customer_email,
+                'customer_phone'            => $this->customer_phone,
+                'notification_url'          => $this->notification_url,
+                'return_success_url'        => $this->return_success_url,
+                'return_failure_url'        => $this->return_failure_url,
+                'return_cancel_url'         => $this->return_cancel_url,
+                'billing_address'           => $this->getBillingAddressParamsStructure(),
+                'shipping_address'          => $this->getShippingAddressParamsStructure(),
+                'remember_card'             => var_export($this->remember_card, true),
+                'transaction_types'         => $this->transaction_types,
+                'lifetime'                  => $this->lifetime,
+                'risk_params'               => $this->getRiskParamsStructure(),
+                'dynamic_descriptor_params' => $this->getDynamicDescriptorParamsStructure(),
+                'pay_later'                 => var_export($this->pay_later, true),
+                'reminders'                 => $this->getRemindersStructure()
+            ]
+        ];
 
         $this->treeStructure = \Genesis\Utils\Common::createArrayObject($treeStructure);
     }

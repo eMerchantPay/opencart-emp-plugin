@@ -72,6 +72,82 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 	}
 
 	/**
+	 * @param $email
+	 *
+	 * @return null|string
+	 */
+	public function getConsumerId($email)
+	{
+		$query = $this->db->query("
+			SELECT * FROM
+				`" . DB_PREFIX . "emerchantpay_checkout_consumers`
+			WHERE
+				`customer_email` = '" . $this->db->escape($email) . "' LIMIT 1
+		");
+
+		if ($query->num_rows) {
+			return $query->rows[0]['consumer_id'];
+		}
+
+		return $this->retrieveConsumerIdFromGenesisGateway($email);
+	}
+
+	/**
+	 * @param string $email
+	 *
+	 * @return null|string
+	 */
+    protected function retrieveConsumerIdFromGenesisGateway($email)
+	{
+		try {
+			$genesis = new \Genesis\Genesis('NonFinancial\Consumers\Retrieve');
+			$genesis->request()->setEmail($email);
+
+			$genesis->execute();
+
+			$response = $genesis->response()->getResponseObject();
+
+			if ($this->isErrorResponse($response)) {
+				return null;
+			}
+
+			return $response->consumer_id;
+		} catch (\Exception $exception) {
+			return null;
+		}
+	}
+
+	/**
+	 * @param $response
+	 *
+	 * @return bool
+	 */
+    protected function isErrorResponse($response)
+	{
+		$state = new \Genesis\API\Constants\Transaction\States($response->status);
+
+		return $state->isError();
+	}
+
+	/**
+	 * @param $email
+	 * @param $consumer_id
+	 */
+	public function addConsumer($email, $consumer_id)
+	{
+		try {
+			$this->db->query("
+				INSERT INTO
+					`" . DB_PREFIX . "emerchantpay_checkout_consumers` (`customer_email`, `consumer_id`)
+				VALUES
+					('" . $this->db->escape($email) . "', '" . $this->db->escape($consumer_id) . "')
+			");
+		} catch (\Exception $exception) {
+			$this->logEx($exception);
+		}
+	}
+
+	/**
 	 * Get saved transaction (from DB) by id
 	 *
 	 * @param $unique_id
@@ -213,7 +289,6 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 			$genesis
 				->request()
 				->setTransactionId($data['transaction_id'])
-				->setRemoteIp($data['remote_address'])
 				// Financial
 				->setCurrency($data['currency'])
 				->setAmount($data['amount'])
@@ -261,7 +336,11 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 				}
 			}
 
+			$this->prepareWpfRequestTokenization($genesis);
+
 			$genesis->execute();
+
+			$this->saveWpfTokenizationData($genesis);
 
 			return $genesis->response()->getResponseObject();
 		} catch (\Genesis\Exceptions\ErrorAPI $api) {
@@ -270,6 +349,43 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 			$this->logEx($exception);
 
 			return false;
+		}
+	}
+
+	/**
+	 * @param \Genesis\Genesis $genesis
+	 */
+	protected function prepareWpfRequestTokenization(\Genesis\Genesis $genesis)
+	{
+		if ($this->isWpfTokenizationEnabled()) {
+			$genesis->request()->setRememberCard(true);
+		}
+
+		$consumer_id = $this->getConsumerId($genesis->request()->getCustomerEmail());
+
+		if ($consumer_id) {
+			$genesis->request()->setConsumerId($consumer_id);
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isWpfTokenizationEnabled()
+	{
+		return (bool)$this->config->get('emerchantpay_checkout_wpf_tokenization');
+	}
+
+	/**
+	 * @param $genesis
+	 */
+	protected function saveWpfTokenizationData($genesis)
+	{
+		if (!empty($genesis->response()->getResponseObject()->consumer_id)) {
+			$this->addConsumer(
+				$genesis->request()->getCustomerEmail(),
+				$genesis->response()->getResponseObject()->consumer_id
+			);
 		}
 	}
 
@@ -416,8 +532,6 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 			\Genesis\API\Constants\Payment\Methods::QIWI        =>
 				\Genesis\API\Constants\Transaction\Types::PPRO,
 			\Genesis\API\Constants\Payment\Methods::SAFETY_PAY  =>
-				\Genesis\API\Constants\Transaction\Types::PPRO,
-			\Genesis\API\Constants\Payment\Methods::TELEINGRESO =>
 				\Genesis\API\Constants\Transaction\Types::PPRO,
 			\Genesis\API\Constants\Payment\Methods::TRUST_PAY   =>
 				\Genesis\API\Constants\Transaction\Types::PPRO,

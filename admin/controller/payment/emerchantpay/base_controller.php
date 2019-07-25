@@ -323,6 +323,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 			"{$this->module_name}_token"                      => $this->getFieldValue("{$this->module_name}_token"),
 			"{$this->module_name}_sandbox"                    => $this->getFieldValue("{$this->module_name}_sandbox"),
 			"{$this->module_name}_transaction_type"           => $this->getFieldValue("{$this->module_name}_transaction_type"),
+			"{$this->module_name}_wpf_tokenization"           => $this->getFieldValue("{$this->module_name}_wpf_tokenization"),
 			"{$this->module_name}_total"                      => $this->getFieldValue("{$this->module_name}_total"),
 			"{$this->module_name}_order_status_id"            => $this->getFieldValue("{$this->module_name}_order_status_id"),
 			"{$this->module_name}_order_failure_status_id"    => $this->getFieldValue("{$this->module_name}_order_failure_status_id"),
