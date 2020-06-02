@@ -23,8 +23,13 @@
 
 namespace Genesis\API\Request\Financial\Cards;
 
+use Genesis\API\Constants\Transaction\Parameters\MpiProtocolVersions;
+use Genesis\API\Constants\Transaction\Parameters\ScaExemptions;
 use Genesis\API\Traits\Request\DocumentAttributes;
+use Genesis\API\Traits\Request\Financial\CryptoAttributes;
+use Genesis\API\Traits\Request\Financial\FxRateAttributes;
 use Genesis\API\Traits\Request\Financial\GamingAttributes;
+use Genesis\API\Traits\Request\Financial\ScaAttributes;
 use Genesis\API\Traits\Request\MotoAttributes;
 use Genesis\API\Traits\Request\Financial\NotificationAttributes;
 use Genesis\API\Traits\Request\Financial\AsyncAttributes;
@@ -35,6 +40,7 @@ use Genesis\API\Traits\Request\Financial\MpiAttributes;
 use Genesis\API\Traits\Request\RiskAttributes;
 use Genesis\API\Traits\Request\Financial\DescriptorAttributes;
 use Genesis\API\Traits\Request\Financial\ReferenceAttributes;
+use Genesis\API\Traits\Request\Financial\TravelData\TravelDataAttributes;
 
 /**
  * Class Sale3D
@@ -49,7 +55,7 @@ class Sale3D extends \Genesis\API\Request\Base\Financial
     use GamingAttributes, MotoAttributes, NotificationAttributes, AsyncAttributes,
         PaymentAttributes, CreditCardAttributes, AddressInfoAttributes,
         MpiAttributes, RiskAttributes, DescriptorAttributes, ReferenceAttributes,
-        DocumentAttributes;
+        DocumentAttributes, TravelDataAttributes, ScaAttributes, FxRateAttributes, CryptoAttributes;
 
     /**
      * Returns the Request transaction type
@@ -88,11 +94,15 @@ class Sale3D extends \Genesis\API\Request\Base\Financial
 
         $this->requiredFieldValues = \Genesis\Utils\Common::createArrayObject($requiredFieldValues);
 
-        $requiredFieldsConditional = [
-            'notification_url'   => ['return_success_url', 'return_failure_url'],
-            'return_success_url' => ['notification_url', 'return_failure_url'],
-            'return_failure_url' => ['notification_url', 'return_success_url']
-        ];
+        $requiredFieldsConditional = array_merge(
+            [
+                'notification_url'   => ['return_success_url', 'return_failure_url'],
+                'return_success_url' => ['notification_url', 'return_failure_url'],
+                'return_failure_url' => ['notification_url', 'return_success_url'],
+            ],
+            $this->requiredMpiFieldsConditional(),
+            $this->requiredScaFieldConditional()
+        );
 
         $this->requiredFieldsConditional = \Genesis\Utils\Common::createArrayObject($requiredFieldsConditional);
 
@@ -132,7 +142,11 @@ class Sale3D extends \Genesis\API\Request\Base\Financial
             'mpi_params'                => $this->getMpiParamsStructure(),
             'risk_params'               => $this->getRiskParamsStructure(),
             'dynamic_descriptor_params' => $this->getDynamicDescriptorParamsStructure(),
-            'reference_id'              => $this->reference_id
+            'reference_id'              => $this->reference_id,
+            'travel'                    => $this->getTravelData(),
+            'sca_params'                => $this->getScaParamsStructure(),
+            'fx_rate_id'                => $this->fx_rate_id,
+            'crypto'                    => $this->crypto
         ];
     }
 }

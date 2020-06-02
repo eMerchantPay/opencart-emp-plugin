@@ -24,6 +24,8 @@
 namespace Genesis\API\Request\Financial\Cards;
 
 use Genesis\API\Traits\Request\DocumentAttributes;
+use Genesis\API\Traits\Request\Financial\CryptoAttributes;
+use Genesis\API\Traits\Request\Financial\FxRateAttributes;
 use Genesis\API\Traits\Request\Financial\GamingAttributes;
 use Genesis\API\Traits\Request\MotoAttributes;
 use Genesis\API\Traits\Request\Financial\PaymentAttributes;
@@ -32,6 +34,7 @@ use Genesis\API\Traits\Request\AddressInfoAttributes;
 use Genesis\API\Traits\Request\RiskAttributes;
 use Genesis\API\Traits\Request\Financial\DescriptorAttributes;
 use Genesis\API\Traits\Request\Financial\ReferenceAttributes;
+use Genesis\API\Traits\Request\Financial\TravelData\TravelDataAttributes;
 
 /**
  * Class Sale
@@ -45,7 +48,7 @@ class Sale extends \Genesis\API\Request\Base\Financial
 {
     use GamingAttributes, MotoAttributes, PaymentAttributes, CreditCardAttributes,
         AddressInfoAttributes, RiskAttributes, DescriptorAttributes, ReferenceAttributes,
-        DocumentAttributes;
+        DocumentAttributes, TravelDataAttributes, FxRateAttributes, CryptoAttributes;
 
     /**
      * Returns the Request transaction type
@@ -109,7 +112,10 @@ class Sale extends \Genesis\API\Request\Base\Financial
             'shipping_address'          => $this->getShippingAddressParamsStructure(),
             'risk_params'               => $this->getRiskParamsStructure(),
             'dynamic_descriptor_params' => $this->getDynamicDescriptorParamsStructure(),
-            'reference_id'              => $this->reference_id
+            'reference_id'              => $this->reference_id,
+            'travel'                    => $this->getTravelData(),
+            'fx_rate_id'                => $this->fx_rate_id,
+            'crypto'                    => $this->crypto
         ];
     }
 }

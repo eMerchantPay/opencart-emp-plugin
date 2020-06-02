@@ -24,6 +24,7 @@
 namespace Genesis\API\Traits;
 
 use Genesis\Exceptions\InvalidArgument;
+use Genesis\Utils\Common;
 
 /**
  * Trait RestrictedSetter
@@ -40,13 +41,68 @@ trait RestrictedSetter
      * @return $this
      * @throws InvalidArgument
      */
-    public function restrictedSetter($field, $allowed, $value, $errorMessage)
+    public function allowedOptionsSetter($field, $allowed, $value, $errorMessage)
     {
         if (!in_array($value, $allowed)) {
             throw new InvalidArgument($errorMessage . ' Allowed values are ' . implode(', ', $allowed));
         }
 
         $this->$field = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string $field
+     * @param string $value
+     * @param int/null $min
+     * @param int/null $max
+     *
+     * @return $this
+     * @throws InvalidArgument
+     */
+    protected function setLimitedString($field, $value, $min = null, $max = null)
+    {
+        $len = strlen($value);
+
+        if ($min !== null && $len < $min) {
+            throw new InvalidArgument("$field value must be at least $min chars long.");
+        }
+        if ($max !== null && $len > $max) {
+            throw new InvalidArgument("$field value must be max $max chars long.");
+        }
+
+        $this->$field = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param $field
+     * @param array $formats
+     * @param $value
+     * @param $errorMessage
+     *
+     * @return $this
+     * @throws InvalidArgument
+     */
+    protected function parseDate($field, $formats, $value, $errorMessage)
+    {
+        $date = false;
+
+        foreach ($formats as $format) {
+            $date = \DateTime::createFromFormat($format, $value);
+
+            if ($date instanceof \DateTime) {
+                break;
+            }
+        }
+
+        if (!$date) {
+            throw new InvalidArgument($errorMessage . ' Allowed format is ' . implode(' or ', $formats));
+        }
+
+        $this->$field = $date;
 
         return $this;
     }

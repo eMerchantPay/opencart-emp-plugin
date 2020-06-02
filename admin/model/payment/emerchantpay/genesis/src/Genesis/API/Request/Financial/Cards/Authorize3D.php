@@ -23,9 +23,14 @@
 
 namespace Genesis\API\Request\Financial\Cards;
 
+use Genesis\API\Constants\Transaction\Parameters\MpiProtocolVersions;
+use Genesis\API\Constants\Transaction\Parameters\ScaExemptions;
 use Genesis\API\Traits\Request\DocumentAttributes;
+use Genesis\API\Traits\Request\Financial\CryptoAttributes;
+use Genesis\API\Traits\Request\Financial\FxRateAttributes;
 use Genesis\API\Traits\Request\Financial\GamingAttributes;
 use Genesis\API\Traits\Request\Financial\PreauthorizationAttributes;
+use Genesis\API\Traits\Request\Financial\ScaAttributes;
 use Genesis\API\Traits\Request\MotoAttributes;
 use Genesis\API\Traits\Request\Financial\NotificationAttributes;
 use Genesis\API\Traits\Request\Financial\AsyncAttributes;
@@ -35,6 +40,7 @@ use Genesis\API\Traits\Request\AddressInfoAttributes;
 use Genesis\API\Traits\Request\Financial\MpiAttributes;
 use Genesis\API\Traits\Request\RiskAttributes;
 use Genesis\API\Traits\Request\Financial\DescriptorAttributes;
+use Genesis\API\Traits\Request\Financial\TravelData\TravelDataAttributes;
 
 /**
  * Class Authorize3D
@@ -48,7 +54,7 @@ class Authorize3D extends \Genesis\API\Request\Base\Financial
     use GamingAttributes, MotoAttributes, NotificationAttributes, AsyncAttributes,
         PaymentAttributes, CreditCardAttributes, AddressInfoAttributes,
         MpiAttributes, RiskAttributes, DescriptorAttributes, DocumentAttributes,
-        PreauthorizationAttributes;
+        PreauthorizationAttributes, TravelDataAttributes, ScaAttributes, FxRateAttributes, CryptoAttributes;
 
     /**
      * Returns the Request transaction type
@@ -87,11 +93,15 @@ class Authorize3D extends \Genesis\API\Request\Base\Financial
 
         $this->requiredFieldValues = \Genesis\Utils\Common::createArrayObject($requiredFieldValues);
 
-        $requiredFieldsConditional = [
-            'notification_url'   => ['return_success_url', 'return_failure_url'],
-            'return_success_url' => ['notification_url', 'return_failure_url'],
-            'return_failure_url' => ['notification_url', 'return_success_url']
-        ];
+        $requiredFieldsConditional = array_merge(
+            [
+                'notification_url'   => ['return_success_url', 'return_failure_url'],
+                'return_success_url' => ['notification_url', 'return_failure_url'],
+                'return_failure_url' => ['notification_url', 'return_success_url'],
+            ],
+            $this->requiredMpiFieldsConditional(),
+            $this->requiredScaFieldConditional()
+        );
 
         $this->requiredFieldsConditional = \Genesis\Utils\Common::createArrayObject($requiredFieldsConditional);
 
@@ -131,7 +141,11 @@ class Authorize3D extends \Genesis\API\Request\Base\Financial
             'shipping_address'          => $this->getShippingAddressParamsStructure(),
             'mpi_params'                => $this->getMpiParamsStructure(),
             'risk_params'               => $this->getRiskParamsStructure(),
-            'dynamic_descriptor_params' => $this->getDynamicDescriptorParamsStructure()
+            'dynamic_descriptor_params' => $this->getDynamicDescriptorParamsStructure(),
+            'travel'                    => $this->getTravelData(),
+            'sca_params'                => $this->getScaParamsStructure(),
+            'fx_rate_id'                => $this->fx_rate_id,
+            'crypto'                    => $this->crypto
         ];
     }
 }

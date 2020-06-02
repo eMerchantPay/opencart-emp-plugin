@@ -30,7 +30,7 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.4.3';
+	protected $module_version = '1.4.4';
 
 	/**
 	 * Perform installation logic
