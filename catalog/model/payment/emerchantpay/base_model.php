@@ -21,6 +21,10 @@ if (!class_exists('\Genesis\Genesis', false)) {
 	include DIR_APPLICATION . '/../admin/model/payment/emerchantpay/genesis/vendor/autoload.php';
 }
 
+if (!class_exists('EmerchantPayHelper', false)) {
+	include DIR_APPLICATION . '/../admin/model/payment/emerchantpay/EMerchantPayHelper.php';
+}
+
 /**
  * Base Abstract Model for Method Models
  *
@@ -28,6 +32,8 @@ if (!class_exists('\Genesis\Genesis', false)) {
  */
 abstract class ModelPaymentEmerchantPayBase extends Model
 {
+	const PPRO_TRANSACTION_SUFFIX     = '_ppro';
+
 	/**
 	 * Max. number of records of the cron log
 	 */
@@ -77,6 +83,12 @@ abstract class ModelPaymentEmerchantPayBase extends Model
 	const OC_ORD_REC_STATUS_SUSPENDED = 4;
 	const OC_ORD_REC_STATUS_EXPIRED   = 5;
 	const OC_ORD_REC_STATUS_PENDING   = 6;
+
+	/**
+	 * OpenCart TaxCalss Constants
+	 */
+	const OC_TAX_CLASS_PHYSICAL_PRODUCT = 9;
+	const OC_TAX_CLASS_VIRTUAL_PRODUCT  = 10;
 
 	/**
 	 * Module Name
@@ -733,14 +745,15 @@ abstract class ModelPaymentEmerchantPayBase extends Model
 	 * @param const $transaction_type
 	 *
 	 * @return \Genesis\Genesis
+	 * @throws \Genesis\Exceptions\InvalidMethod
+	 * @throws \Genesis\Exceptions\InvalidArgument
+	 * @throws \Genesis\Exceptions\InvalidMethod
 	 */
 	public function createGenesisRequest($transaction_type)
 	{
-		$request_class_name = \Genesis\Utils\Common::snakeCaseToCamelCase(
-			str_replace('3d', '3D', $transaction_type)
+		return new \Genesis\Genesis(
+			\Genesis\API\Constants\Transaction\Types::getFinancialRequestClassForTrxType($transaction_type)
 		);
-		$recurring_inner_namespace = (strpos($transaction_type, 'recurring') !== false) ? "Recurring\\" : '';
-		return new \Genesis\Genesis("Financial\\Cards\\{$recurring_inner_namespace}{$request_class_name}");
 	}
 
 	/**

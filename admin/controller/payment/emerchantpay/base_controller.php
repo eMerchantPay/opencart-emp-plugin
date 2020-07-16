@@ -713,11 +713,17 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 				array_key_exists('terminal_token', $transaction) ? $transaction['terminal_token'] : null;
 
 			if (isset($transaction['order_id']) && abs((int)$transaction['order_id']) > 0) {
-				$amount = $this->request->post['amount'];
-
+				$amount  = $this->request->post['amount'];
 				$message = isset($this->request->post['message']) ? $this->request->post['message'] : '';
-
-				$capture = $this->getModelInstance()->capture($transaction['unique_id'], $amount, $transaction['currency'], $message, $terminal_token);
+				$capture = $this->getModelInstance()->capture(
+					$transaction['type'],
+					$transaction['unique_id'],
+					$amount,
+					$transaction['currency'],
+					empty($message) ? 'Capture Opencart Transaction' : $message,
+					$terminal_token,
+					$transaction['order_id']
+				);
 
 				if (isset($capture->unique_id)) {
 					$timestamp = ($capture->timestamp instanceof \DateTime) ? $capture->timestamp->format('c') : $capture->timestamp;
@@ -792,11 +798,17 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 				array_key_exists('terminal_token', $transaction) ? $transaction['terminal_token'] : null;
 
 			if (isset($transaction['order_id']) && intval($transaction['order_id']) > 0) {
-				$amount = $this->request->post['amount'];
-
+				$amount  = $this->request->post['amount'];
 				$message = isset($this->request->post['message']) ? $this->request->post['message'] : '';
-
-				$refund = $this->getModelInstance()->refund($transaction['unique_id'], $amount, $transaction['currency'], $message, $terminal_token);
+				$refund  = $this->getModelInstance()->refund(
+					$transaction['type'],
+					$transaction['unique_id'],
+					$amount,
+					$transaction['currency'],
+					empty($message) ? 'Refund Opencart Transaction' : $message,
+					$terminal_token,
+					$transaction['order_id']
+				);
 
 				if (isset($refund->unique_id)) {
 					$timestamp = ($refund->timestamp instanceof \DateTime) ? $refund->timestamp->format('c') : $refund->timestamp;
@@ -898,7 +910,11 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 			if (isset($transaction['order_id']) && abs((int)$transaction['order_id']) > 0) {
 				$message = isset($this->request->post['message']) ? $this->request->post['message'] : '';
 
-				$void = $this->getModelInstance()->void($transaction['unique_id'], $message, $terminal_token);
+				$void = $this->getModelInstance()->void(
+					$transaction['unique_id'],
+					empty($message) ? 'Void Opencart Transaction' : $message,
+					$terminal_token
+				);
 
 				if (isset($void->unique_id)) {
 					$timestamp = ($void->timestamp instanceof \DateTime) ? $void->timestamp->format('c') : $void->timestamp;

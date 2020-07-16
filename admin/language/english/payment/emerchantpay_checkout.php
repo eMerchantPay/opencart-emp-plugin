@@ -17,6 +17,10 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+if (!class_exists('EMerchantPayHelper')) {
+	require_once DIR_APPLICATION . "model/payment/emerchantpay/EMerchantPayHelper.php";
+}
+
 // Heading
 $_['heading_title'] = 'emerchantpay Checkout';
 
@@ -64,27 +68,7 @@ $_['entry_cron_allowed_ip']             = 'IP address';
 $_['entry_cron_last_execution']         = 'Cron/schtasks last execution';
 
 // Transaction Types
-$_['text_transaction_abn_ideal']           = 'ABN iDEAL';
-$_['text_transaction_authorize']           = 'Authorize';
-$_['text_transaction_authorize_3d']        = 'Authorize 3D-Secure';
-$_['text_transaction_cashu']               = 'CashU';
-$_['text_transaction_eps']                 = 'eps';
-$_['text_transaction_giro_pay']            = 'GiroPay';
-$_['text_transaction_neteller']            = 'Neteller';
-$_['text_transaction_paysafecard']         = 'PaySafeCard';
-$_['text_transaction_przelewy24']          = 'Przelewy24';
-$_['text_transaction_qiwi']                = 'Qiwi';
-$_['text_transaction_init_recurring']      = 'Recurring';
-$_['text_transaction_init_recurring_3d']   = 'Recurring 3D-Secure';
-$_['text_transaction_safety_pay']          = 'SafetyPay';
-$_['text_transaction_paybyvoucher_sale']   = 'PayByVoucher (Sale)';
-$_['text_transaction_paybyvoucher_yeepay'] = 'PayByVoucher (YeePay)';
-$_['text_transaction_poli']                = 'POLi';
-$_['text_transaction_sale']                = 'Sale (Authorize + Capture)';
-$_['text_transaction_sale_3d']             = 'Sale (Authorize + Capture) 3D-Secure';
-$_['text_transaction_sofort']              = 'SOFORT';
-$_['text_transaction_trust_pay']           = 'TrustPay';
-$_['text_transaction_webmoney']            = 'WebMoney';
+$_ = array_merge($_, EMerchantPayHelper::getTransactionTypeNames());
 
 // Transaction View
 $_['text_payment_info']          = 'emerchantpay transactions';

@@ -17,6 +17,10 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+if (!class_exists('EMerchantPayHelper')) {
+	require_once DIR_APPLICATION . "model/payment/emerchantpay/EMerchantPayHelper.php";
+}
+
 // Heading
 $_['heading_title'] = 'emerchantpay Direct';
 
@@ -65,12 +69,7 @@ $_['entry_cron_allowed_ip']             = 'IP address';
 $_['entry_cron_last_execution']         = 'Cron/schtasks last execution';
 
 // Transaction Types
-$_['text_transaction_authorize']         = 'Authorize';
-$_['text_transaction_authorize_3d']      = 'Authorize 3D-Secure';
-$_['text_transaction_sale']              = 'Sale (Authorize + Capture)';
-$_['text_transaction_sale_3d']           = 'Sale (Authorize + Capture) 3D-Secure';
-$_['text_transaction_init_recurring']    = 'Recurring';
-$_['text_transaction_init_recurring_3d'] = 'Recurring 3D-Secure';
+$_ = array_merge($_, EMerchantPayHelper::getTransactionTypeNames());
 
 // Transaction View
 $_['text_payment_info']          = 'emerchantpay transactions';

@@ -322,19 +322,7 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 				->setShippingCountry($data['shipping']['country'])
 				->setLanguage($data['language']);
 
-			$transaction_types = $this->isRecurringOrder() ? $this->getRecurringTransactionTypes() : $this->getTransactionTypes();
-
-			foreach ($transaction_types as $type) {
-				if (is_array($type)) {
-					$genesis
-						->request()
-						->addTransactionType($type['name'], $type['parameters']);
-				} else {
-					$genesis
-						->request()
-						->addTransactionType($type);
-				}
-			}
+			$this->addTransactionTypesToGatewayRequest($genesis, $data);
 
 			$this->prepareWpfRequestTokenization($genesis);
 
@@ -512,6 +500,67 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 	}
 
 	/**
+	 * Get the Order Products stored in the Database
+	 *
+	 * @param $order_id
+	 * @return mixed
+	 */
+	public function getDbOrderProducts($order_id) {
+		$query = $this->db->query("
+			SELECT
+				*
+			FROM " . DB_PREFIX . "order_product
+			WHERE
+				order_id = '" . (int)$order_id . "'
+			");
+
+		return $query->rows;
+	}
+
+	/**
+	 * Get the Order Totals stored in the Database
+	 *
+	 * @param $order_id
+	 * @return mixed
+	 */
+	public function getOrderTotals($order_id) {
+		$query = $this->db->query("
+			SELECT
+				*
+			FROM " . DB_PREFIX . "order_total
+			WHERE
+				order_id = '" . (int)$order_id . "' ORDER BY sort_order
+			");
+
+		return $query->rows;
+	}
+
+	/**
+	 * Get Products Information
+	 *
+	 * @param array $products
+	 * @return mixed
+	 */
+	public function getProductsInfo($products = array())
+	{
+		$ids = array();
+		foreach ($products as $product) {
+			array_push($ids, abs((int)$product));
+		}
+
+		$products_resource = $this->db->query("
+			SELECT
+				*
+			FROM
+				" . DB_PREFIX . "product
+			WHERE
+				product_id IN (" . implode(', ', $ids) . ")
+		");
+
+		return $products_resource->rows;
+	}
+
+	/**
 	 * Get the selected transaction types in array
 	 *
 	 * @return array
@@ -519,23 +568,14 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 	public function getTransactionTypes()
 	{
 		$processed_list = array();
+		$alias_map      = array();
 
 		$selected_types = $this->config->get('emerchantpay_checkout_transaction_type');
+		$methods        = \Genesis\API\Constants\Payment\Methods::getMethods();
 
-		$alias_map = array(
-			\Genesis\API\Constants\Payment\Methods::EPS         =>
-				\Genesis\API\Constants\Transaction\Types::PPRO,
-			\Genesis\API\Constants\Payment\Methods::GIRO_PAY    =>
-				\Genesis\API\Constants\Transaction\Types::PPRO,
-			\Genesis\API\Constants\Payment\Methods::PRZELEWY24  =>
-				\Genesis\API\Constants\Transaction\Types::PPRO,
-			\Genesis\API\Constants\Payment\Methods::QIWI        =>
-				\Genesis\API\Constants\Transaction\Types::PPRO,
-			\Genesis\API\Constants\Payment\Methods::SAFETY_PAY  =>
-				\Genesis\API\Constants\Transaction\Types::PPRO,
-			\Genesis\API\Constants\Payment\Methods::TRUST_PAY   =>
-				\Genesis\API\Constants\Transaction\Types::PPRO,
-		);
+		foreach ($methods as $method) {
+			$alias_map[$method . self::PPRO_TRANSACTION_SUFFIX] = \Genesis\API\Constants\Transaction\Types::PPRO;
+		}
 
 		foreach ($selected_types as $selected_type) {
 			if (array_key_exists($selected_type, $alias_map)) {
@@ -544,7 +584,7 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 				$processed_list[$transaction_type]['name'] = $transaction_type;
 
 				$processed_list[$transaction_type]['parameters'][] = array(
-					'payment_method' => $selected_type
+					'payment_method' => str_replace(self::PPRO_TRANSACTION_SUFFIX, '', $selected_type)
 				);
 			} else {
 				$processed_list[] = $selected_type;
@@ -552,6 +592,71 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 		}
 
 		return $processed_list;
+	}
+
+	/**
+	 * @param \Genesis\Genesis $genesis
+	 * @param $order
+	 * @throws \Genesis\Exceptions\ErrorParameter
+	 */
+	public function addTransactionTypesToGatewayRequest(\Genesis\Genesis $genesis, $order)
+	{
+		$types = $this->isRecurringOrder() ? $this->getRecurringTransactionTypes() : $this->getTransactionTypes();
+
+		foreach ($types as $type) {
+			if (is_array($type)) {
+				$genesis
+					->request()
+					->addTransactionType($type['name'], $type['parameters']);
+
+				continue;
+			}
+
+			$parameters = $this->getCustomRequiredAttributes($type, $order);
+
+			if (!isset($parameters)) {
+				$parameters = array();
+			}
+
+			$genesis
+				->request()
+				->addTransactionType(
+					$type,
+					$parameters
+				);
+			unset($parameters);
+		}
+	}
+
+	/**
+	 * @param string $type Transaction Type
+	 * @param array $order Transformed Order Array
+	 * @return array
+	 * @throws \Genesis\Exceptions\ErrorParameter
+	 */
+	public function getCustomRequiredAttributes($type, $order)
+	{
+		$parameters = array();
+		switch ($type) {
+			case \Genesis\API\Constants\Transaction\Types::IDEBIT_PAYIN:
+			case \Genesis\API\Constants\Transaction\Types::INSTA_DEBIT_PAYIN:
+				$parameters = array(
+					'customer_account_id' => $order['additional']['user_hash']
+				);
+				break;
+			case \Genesis\API\Constants\Transaction\Types::KLARNA_AUTHORIZE:
+				$parameters = EMerchantPayHelper::getKlarnaCustomParamItems($order)->toArray();
+				break;
+			case \Genesis\API\Constants\Transaction\Types::TRUSTLY_SALE:
+				$current_user_id = $order['additional']['user_id'];
+				$user_id         = ($current_user_id > 0) ? $current_user_id : $order['additional']['user_hash'];
+				$parameters = array(
+					'user_id' => $user_id
+				);
+				break;
+		}
+
+		return $parameters;
 	}
 
 	/**
@@ -572,6 +677,16 @@ class ModelPaymentEmerchantPayCheckout extends ModelPaymentEmerchantPayBase
 	public function getUsage()
 	{
 		return sprintf('%s checkout transaction', $this->config->get('config_name'));
+	}
+
+	/**
+	 * Retrieve the current logged user ID
+	 *
+	 * @return int
+	 */
+	public function getCurrentUserId()
+	{
+		return array_key_exists('user_id', $this->session->data) ? $this->session->data['user_id'] : 0;
 	}
 
 	/**

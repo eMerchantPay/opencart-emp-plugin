@@ -126,7 +126,19 @@ class ControllerPaymentEmerchantPayCheckout extends ControllerPaymentEmerchantPa
 		$this->load->language('payment/emerchantpay_checkout');
 
 		try {
-			$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+			$order_info         = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+			$product_order_info = $this->model_payment_emerchantpay_checkout
+				->getDbOrderProducts($this->session->data['order_id']);
+			$order_totals       = $this->model_payment_emerchantpay_checkout
+				->getOrderTotals($this->session->data['order_id']);
+			$product_info       = $this->model_payment_emerchantpay_checkout->getProductsInfo(
+				array_map(
+					function ($value) {
+						return $value['product_id'];
+					},
+					$product_order_info
+				)
+			);
 
 			$data = array(
 				'transaction_id'	 => $this->model_payment_emerchantpay_checkout->genTransactionId(),
@@ -171,6 +183,14 @@ class ControllerPaymentEmerchantPayCheckout extends ControllerPaymentEmerchantPa
 					'city'	         => $order_info['shipping_city'],
 					'state'	         => $order_info['shipping_zone_code'],
 					'country'	     => $order_info['shipping_iso_code_2'],
+				),
+
+				'additional'             => array(
+					'user_id'            => $this->model_payment_emerchantpay_checkout->getCurrentUserId(),
+					'user_hash'          => $this->getCurrentUserIdHash(),
+					'product_order_info' => $product_order_info,
+					'product_info'       => $product_info,
+					'order_totals'       => $order_totals
 				)
 			);
 
@@ -414,5 +434,30 @@ class ControllerPaymentEmerchantPayCheckout extends ControllerPaymentEmerchantPa
 	{
 		$this->load->model('payment/emerchantpay_checkout');
 		$this->model_payment_emerchantpay_checkout->processRecurringOrders();
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getCustomerId()
+	{
+		if ($this->customer->isLogged()) {
+			return $this->customer->getId();
+		}
+
+		return 0;
+	}
+
+	/**
+	 * @param int $length
+	 * @return string
+	 */
+	public function getCurrentUserIdHash($length = 30)
+	{
+		$user_id= $this->getCustomerId();
+
+		$user_hash = ($user_id > 0) ? sha1($user_id) : $this->model_payment_emerchantpay_checkout->genTransactionId();
+
+		return substr($user_hash, 0, $length);
 	}
 }

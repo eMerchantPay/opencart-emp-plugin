@@ -17,6 +17,10 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+if (!class_exists('EMerchantPayHelper')) {
+	require_once DIR_APPLICATION . 'model/payment/emerchantpay/EMerchantPayHelper.php';
+}
+
 /**
  * Backend model for the "emerchantpay Direct" module
  *
@@ -30,7 +34,7 @@ class ModelPaymentEmerchantPayDirect extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.4.4';
+	protected $module_version = '1.4.5';
 
 	/**
 	 * Perform installation logic
@@ -288,12 +292,14 @@ class ModelPaymentEmerchantPayDirect extends Model
 	 *
 	 * @return object
 	 */
-	public function capture($reference_id, $amount, $currency, $usage = '')
+	public function capture($type, $reference_id, $amount, $currency, $usage = '')
 	{
 		try {
 			$this->bootstrap();
 
-			$genesis = new \Genesis\Genesis('Financial\Capture');
+			$genesis = new \Genesis\Genesis(
+				\Genesis\API\Constants\Transaction\Types::getCaptureTransactionClass($type)
+			);
 
 			$genesis
 				->request()
@@ -328,12 +334,14 @@ class ModelPaymentEmerchantPayDirect extends Model
 	 *
 	 * @return object
 	 */
-	public function refund($reference_id, $amount, $currency, $usage = '')
+	public function refund($type, $reference_id, $amount, $currency, $usage = '')
 	{
 		try {
 			$this->bootstrap();
 
-			$genesis = new \Genesis\Genesis('Financial\Refund');
+			$genesis = new \Genesis\Genesis(
+				\Genesis\API\Constants\Transaction\Types::getRefundTransactionClass($type)
+			);
 
 			$genesis
 				->request()
@@ -408,19 +416,31 @@ class ModelPaymentEmerchantPayDirect extends Model
 		return array(
 			\Genesis\API\Constants\Transaction\Types::AUTHORIZE    => array(
 				'id'   => \Genesis\API\Constants\Transaction\Types::AUTHORIZE,
-				'name' => $this->language->get('text_transaction_authorize')
+				'name' => $this->language->get(
+					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
+					\Genesis\API\Constants\Transaction\Types::AUTHORIZE
+				)
 			),
 			\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D => array(
 				'id'   => \Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D,
-				'name' => $this->language->get('text_transaction_authorize_3d')
+				'name' => $this->language->get(
+					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
+					\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D
+				)
 			),
 			\Genesis\API\Constants\Transaction\Types::SALE         => array(
 				'id'   => \Genesis\API\Constants\Transaction\Types::SALE,
-				'name' => $this->language->get('text_transaction_sale')
+				'name' => $this->language->get(
+					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
+					\Genesis\API\Constants\Transaction\Types::SALE
+				)
 			),
 			\Genesis\API\Constants\Transaction\Types::SALE_3D      => array(
 				'id'   => \Genesis\API\Constants\Transaction\Types::SALE_3D,
-				'name' => $this->language->get('text_transaction_sale_3d')
+				'name' => $this->language->get(
+					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
+					\Genesis\API\Constants\Transaction\Types::SALE_3D
+				)
 			),
 		);
 	}
@@ -432,20 +452,28 @@ class ModelPaymentEmerchantPayDirect extends Model
 	 */
 	public function getRecurringTransactionTypes()
 	{
+		$data = array();
+
 		$this->bootstrap();
 
 		$this->load->language('payment/emerchantpay_direct');
 
-		return array(
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE    => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE,
-				'name' => $this->language->get('text_transaction_init_recurring')
-			),
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D,
-				'name' => $this->language->get('text_transaction_init_recurring_3d')
-			),
-		);
+		$types = EMerchantPayHelper::getRecurringTransactionTypes();
+
+		foreach ($types as $type) {
+			$name = $this->language->get(EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX . $type);
+
+			if (strpos($name, EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX) !== false) {
+				$name = \Genesis\API\Constants\Transaction\Names::getName($type);
+			}
+
+			$data[$type] = array(
+				'id'   => $type,
+				'name' => $name
+			);
+		}
+
+		return $data;
 	}
 
 	/**

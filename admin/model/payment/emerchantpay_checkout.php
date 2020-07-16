@@ -17,6 +17,10 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+if (!class_exists('EMerchantPayHelper')) {
+	require_once DIR_APPLICATION . "model/payment/emerchantpay/EMerchantPayHelper.php";
+}
+
 /**
  * Backend model for the "emerchantpay Checkout" module
  *
@@ -30,7 +34,7 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.4.4';
+	protected $module_version = '1.4.5';
 
 	/**
 	 * Perform installation logic
@@ -57,7 +61,7 @@ class ModelPaymentEmerchantPayCheckout extends Model
 			) ENGINE=MyISAM DEFAULT COLLATE=utf8_general_ci;
 		");
 		$this->db->query("
-			CREATE TABLE `" . DB_PREFIX . "emerchantpay_checkout_consumers` (
+			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "emerchantpay_checkout_consumers` (
 			  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 			  `customer_email` varchar(255) NOT NULL,
 			  `consumer_id` int(10) unsigned NOT NULL,
@@ -291,20 +295,24 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	/**
 	 * Send Capture transaction to the Gateway
 	 *
+	 * @param string $type
 	 * @param string $reference_id ReferenceId
 	 * @param string $amount Amount to be refunded
 	 * @param string $currency Currency for the refunded amount
 	 * @param string $usage Usage (optional text)
 	 * @param string $token Terminal token of the initial transaction
+	 * @param int    $order_id
 	 *
 	 * @return object
 	 */
-	public function capture($reference_id, $amount, $currency, $usage = '', $token = null)
+	public function capture($type, $reference_id, $amount, $currency, $usage = '', $token = null, $order_id)
 	{
 		try {
 			$this->bootstrap($token);
 
-			$genesis = new \Genesis\Genesis('Financial\Capture');
+			$genesis = new \Genesis\Genesis(
+				\Genesis\API\Constants\Transaction\Types::getCaptureTransactionClass($type)
+			);
 
 			$genesis
 				->request()
@@ -318,6 +326,10 @@ class ModelPaymentEmerchantPayCheckout extends Model
 				->setReferenceId($reference_id)
 				->setAmount($amount)
 				->setCurrency($currency);
+
+			if ($type === \Genesis\API\Constants\Transaction\Types::KLARNA_AUTHORIZE) {
+				$genesis->request()->setItems($this->getKlarnaReferenceAttributes($currency, $order_id));
+			}
 
 			$genesis->execute();
 
@@ -332,20 +344,24 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	/**
 	 * Send Refund transaction to the Gateway
 	 *
+	 * @param string $type Transaction Type
 	 * @param string $reference_id ReferenceId
 	 * @param string $amount Amount to be refunded
 	 * @param string $currency Currency for the refunded amount
 	 * @param string $usage Usage (optional text)
 	 * @param string $token Terminal token of the initial transaction
+	 * @param int    $order_id
 	 *
 	 * @return object
 	 */
-	public function refund($reference_id, $amount, $currency, $usage = '', $token = null)
+	public function refund($type, $reference_id, $amount, $currency, $usage = '', $token = null, $order_id = 0)
 	{
 		try {
 			$this->bootstrap($token);
 
-			$genesis = new \Genesis\Genesis('Financial\Refund');
+			$genesis = new \Genesis\Genesis(
+				\Genesis\API\Constants\Transaction\Types::getRefundTransactionClass($type)
+			);
 
 			$genesis
 				->request()
@@ -360,6 +376,10 @@ class ModelPaymentEmerchantPayCheckout extends Model
 				->setAmount($amount)
 				->setCurrency($currency);
 
+			if ($type === \Genesis\API\Constants\Transaction\Types::KLARNA_CAPTURE) {
+				$genesis->request()->setItems($this->getKlarnaReferenceAttributes($currency, $order_id));
+			}
+
 			$genesis->execute();
 
 			return $genesis->response()->getResponseObject();
@@ -368,6 +388,39 @@ class ModelPaymentEmerchantPayCheckout extends Model
 
 			return $exception->getMessage();
 		}
+	}
+
+	/**
+	 * @param $currency
+	 * @param $order_id
+	 * @return \Genesis\API\Request\Financial\Alternatives\Klarna\Items
+	 * @throws \Genesis\Exceptions\ErrorParameter
+	 */
+	protected function getKlarnaReferenceAttributes($currency, $order_id)
+	{
+		$this->load->model('sale/order');
+
+		$product_order_info = $this->model_sale_order->getOrderProducts($order_id);
+		$order_totals       = $this->model_sale_order->getOrderTotals($order_id);
+		$product_info       = $this->getProductsInfo(
+			array_map(
+				function($value) {
+					return $value['product_id'];
+				},
+				$product_order_info
+			)
+		);
+
+		return EMerchantPayHelper::getKlarnaCustomParamItems(
+			array(
+				'currency'   => $currency,
+				'additional' => array (
+					'product_order_info' => $product_order_info,
+					'product_info'       => $product_info,
+					'order_totals'       => $order_totals
+				)
+			)
+		);
 	}
 
 	/**
@@ -414,88 +467,52 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	 */
 	public function getTransactionTypes()
 	{
+		$data = array();
+
 		$this->bootstrap();
 
 		$this->load->language('payment/emerchantpay_checkout');
 
-		return array(
-			\Genesis\API\Constants\Transaction\Types::ABNIDEAL      => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::ABNIDEAL,
-				'name' => $this->language->get('text_transaction_abn_ideal')
-			),
-			\Genesis\API\Constants\Transaction\Types::AUTHORIZE     => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::AUTHORIZE,
-				'name' => $this->language->get('text_transaction_authorize')
-			),
-			\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D  => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D,
-				'name' => $this->language->get('text_transaction_authorize_3d')
-			),
-			\Genesis\API\Constants\Transaction\Types::CASHU         => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::CASHU,
-				'name' => $this->language->get('text_transaction_cashu')
-			),
-			\Genesis\API\Constants\Payment\Methods::EPS             => array(
-				'id'   => \Genesis\API\Constants\Payment\Methods::EPS,
-				'name' => $this->language->get('text_transaction_eps')
-			),
-			\Genesis\API\Constants\Payment\Methods::GIRO_PAY        => array(
-				'id'   => \Genesis\API\Constants\Payment\Methods::GIRO_PAY,
-				'name' => $this->language->get('text_transaction_giro_pay')
-			),
-			\Genesis\API\Constants\Transaction\Types::NETELLER      => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::NETELLER,
-				'name' => $this->language->get('text_transaction_neteller')
-			),
-			\Genesis\API\Constants\Transaction\Types::PAYBYVOUCHER_SALE      => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::PAYBYVOUCHER_SALE,
-				'name' => $this->language->get('text_transaction_paybyvoucher_sale')
-			),
-			\Genesis\API\Constants\Transaction\Types::PAYBYVOUCHER_YEEPAY      => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::PAYBYVOUCHER_YEEPAY,
-				'name' => $this->language->get('text_transaction_paybyvoucher_yeepay')
-			),
-			\Genesis\API\Constants\Transaction\Types::PAYSAFECARD   => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::PAYSAFECARD,
-				'name' => $this->language->get('text_transaction_paysafecard')
-			),
-			\Genesis\API\Constants\Transaction\Types::POLI      => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::POLI,
-				'name' => $this->language->get('text_transaction_poli')
-			),
-			\Genesis\API\Constants\Payment\Methods::PRZELEWY24      => array(
-				'id'   => \Genesis\API\Constants\Payment\Methods::PRZELEWY24,
-				'name' => $this->language->get('text_transaction_przelewy24')
-			),
-			\Genesis\API\Constants\Payment\Methods::QIWI            => array(
-				'id'   => \Genesis\API\Constants\Payment\Methods::QIWI,
-				'name' => $this->language->get('text_transaction_qiwi')
-			),
-			\Genesis\API\Constants\Payment\Methods::SAFETY_PAY      => array(
-				'id'   => \Genesis\API\Constants\Payment\Methods::SAFETY_PAY,
-				'name' => $this->language->get('text_transaction_safety_pay')
-			),
-			\Genesis\API\Constants\Transaction\Types::SALE          => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::SALE,
-				'name' => $this->language->get('text_transaction_sale')
-			),
-			\Genesis\API\Constants\Transaction\Types::SALE_3D       => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::SALE_3D,
-				'name' => $this->language->get('text_transaction_sale_3d')
-			),
-			\Genesis\API\Constants\Transaction\Types::SOFORT        => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::SOFORT,
-				'name' => $this->language->get('text_transaction_sofort')
-			),
-			\Genesis\API\Constants\Payment\Methods::TRUST_PAY       => array(
-				'id'   => \Genesis\API\Constants\Payment\Methods::TRUST_PAY,
-				'name' => $this->language->get('text_transaction_trust_pay')
-			),
-			\Genesis\API\Constants\Transaction\Types::WEBMONEY      => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::WEBMONEY,
-				'name' => $this->language->get('text_transaction_webmoney')
-			),
+		$transaction_types = \Genesis\API\Constants\Transaction\Types::getWPFTransactionTypes();
+		$excluded_types    = EMerchantPayHelper::getRecurringTransactionTypes();
+
+		// Exclude SDD Recurring
+		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::SDD_INIT_RECURRING_SALE);
+
+		// Exclude PPRO transaction. This is not standalone transaction type
+		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::PPRO);
+
+		// Exclude Transaction Types
+		$transaction_types = array_diff($transaction_types, $excluded_types);
+
+		// Add PPRO types
+		$ppro_types = array_map(
+			function ($type) {
+				return $type . EMerchantPayHelper::PPRO_TRANSACTION_SUFFIX;
+			},
+			\Genesis\API\Constants\Payment\Methods::getMethods()
 		);
+		$transaction_types = array_merge($transaction_types, $ppro_types);
+		asort($transaction_types);
+
+		foreach ($transaction_types as $type) {
+			$name = $this->language->get('text_transaction_' . $type);
+
+			if (strpos($name, 'text_transaction') !== false) {
+				if (\Genesis\API\Constants\Transaction\Types::isValidTransactionType($type)) {
+					$name = \Genesis\API\Constants\Transaction\Names::getName($type);
+				} else {
+					$name = strtoupper($type);
+				}
+			}
+
+			$data[$type] = array(
+				'id'   => $type,
+				'name' => $name
+			);
+		}
+
+		return $data;
 	}
 
 	/**
@@ -512,11 +529,17 @@ class ModelPaymentEmerchantPayCheckout extends Model
 		return array(
 			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE    => array(
 				'id'   => \Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE,
-				'name' => $this->language->get('text_transaction_init_recurring')
+				'name' => $this->language->get(
+					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
+					\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE
+				)
 			),
 			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D => array(
 				'id'   => \Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D,
-				'name' => $this->language->get('text_transaction_init_recurring_3d')
+				'name' => $this->language->get(
+					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
+					\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
+				)
 			),
 		);
 	}
