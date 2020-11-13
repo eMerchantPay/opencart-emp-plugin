@@ -42,6 +42,7 @@ $_['entry_cc_cvv']    = 'Card Security Code (CVV)';
 // Errors
 $_['text_payment_failure']      = 'The payment attempt was unsuccessful, please verify your input and/or try again later!';
 $_['text_payment_system_error'] = "Sorry, we're experiencing issues processing your order.\nPlease try again or contact us for assistance!";
+$_['text_payment_3ds_v2_error'] = "Currently, there is no support for 3DSv2 Credit Card authentication. Consider to use different Credit Card";
 
 // Order Status
 $_['text_payment_status_successful']   = 'Payment successfully processed';

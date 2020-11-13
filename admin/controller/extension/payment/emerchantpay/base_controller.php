@@ -18,19 +18,19 @@
  */
 
 if (!class_exists('\Genesis\Genesis', false)) {
-	include DIR_APPLICATION . '/../admin/model/payment/emerchantpay/genesis/vendor/autoload.php';
+	include DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 }
 
 /**
  * Base Abstract Class for Method Admin Controllers
  *
- * Class ControllerPaymentEmerchantPayBase
+ * Class ControllerExtensionPaymentEmerchantPayBase
  */
-abstract class ControllerPaymentEmerchantPayBase extends Controller
+abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 {
 	/**
 	 * OpenCart constants
-	 * The complete set of constants is defined in the ModelPaymentEmerchantPayBase class
+	 * The complete set of constants is defined in the ModelExtensionPaymentEmerchantPayBase class
 	 */
 	const OC_REC_TXN_CANCELLED = 5;
 	const OC_ORD_STATUS_REFUNDED = 11;
@@ -79,7 +79,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	abstract protected function isModuleRequiresSsl();
 
 	/**
-	 * ControllerPaymentEmerchantPayBase constructor.
+	 * ControllerExtensionPaymentEmerchantPayBase constructor.
 	 * @param $registry
 	 * @throws Exception
 	 */
@@ -157,7 +157,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	 */
 	protected function loadLanguage()
 	{
-		$this->load->language(($this->isVersion30OrAbove() ? "extension/" : "") . "payment/{$this->module_name}");
+		$this->load->language("extension/payment/{$this->module_name}");
 	}
 
 	/**
@@ -167,7 +167,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	 */
 	protected function loadPaymentMethodModel()
 	{
-		$this->load->model("payment/{$this->module_name}");
+		$this->load->model("extension/payment/{$this->module_name}");
 	}
 
 	/**
@@ -177,7 +177,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 	 */
 	protected function getModelInstance()
 	{
-		$method = "model_payment_{$this->module_name}";
+		$method = "model_extension_payment_{$this->module_name}";
 		return $this->{$method};
 	}
 
@@ -387,7 +387,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 		);
 
 		$this->response->setOutput(
-			$this->load->view("payment/{$this->module_name}.tpl", $data)
+			$this->load->view("extension/payment/{$this->module_name}.tpl", $data)
 		);
 	}
 
@@ -609,7 +609,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 					'transactions'               => $transactions,
 				);
 
-				return $this->load->view("payment/{$this->module_name}_order.tpl", $data);
+				return $this->load->view("extension/payment/{$this->module_name}_order.tpl", $data);
 			}
 		}
 
@@ -691,7 +691,7 @@ abstract class ControllerPaymentEmerchantPayBase extends Controller
 				"{$this->module_name}_supports_recurring"         => $this->config->get("{$this->module_name}_supports_recurring")
 			);
 
-			$this->response->setOutput($this->load->view("payment/{$this->module_name}_order_modal.tpl", $data));
+			$this->response->setOutput($this->load->view("extension/payment/{$this->module_name}_order_modal.tpl", $data));
 		}
 	}
 

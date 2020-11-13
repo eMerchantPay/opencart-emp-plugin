@@ -18,19 +18,19 @@
  */
 
 if (!class_exists('\Genesis\Genesis', false)) {
-	include DIR_APPLICATION . '/../admin/model/payment/emerchantpay/genesis/vendor/autoload.php';
+	include DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 }
 
 if (!class_exists('EmerchantPayHelper', false)) {
-	include DIR_APPLICATION . '/../admin/model/payment/emerchantpay/EMerchantPayHelper.php';
+	include DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/EMerchantPayHelper.php';
 }
 
 /**
  * Base Abstract Model for Method Models
  *
- * Class ModelPaymentEmerchantPayBase
+ * Class ModelExtensionPaymentEmerchantPayBase
  */
-abstract class ModelPaymentEmerchantPayBase extends Model
+abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 {
 	const PPRO_TRANSACTION_SUFFIX     = '_ppro';
 
@@ -172,7 +172,7 @@ abstract class ModelPaymentEmerchantPayBase extends Model
 	public function addOrderRecurring($recurring_products, $payment_reference)
 	{
 		$this->load->model('checkout/recurring');
-		$this->load->language('payment/' . $this->module_name);
+		$this->load->language('extension/payment/' . $this->module_name);
 
 		foreach ($recurring_products as $item) {
 			//trial information
@@ -574,7 +574,7 @@ abstract class ModelPaymentEmerchantPayBase extends Model
 	{
 		$this->load->model('checkout/order');
 
-		$this->load->language('payment/' . $this->module_name);
+		$this->load->language('extension/payment/' . $this->module_name);
 
 		try {
 			$this->bootstrap();

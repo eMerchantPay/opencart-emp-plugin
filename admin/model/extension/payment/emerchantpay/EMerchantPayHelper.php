@@ -18,17 +18,23 @@
  */
 
 if (!class_exists('\Genesis\Genesis', false)) {
-	if (strpos('admin', DIR_APPLICATION) === false) {
-		$path = DIR_APPLICATION . '/../admin/model/payment/emerchantpay/genesis/vendor/autoload.php';
+	if (strpos(DIR_APPLICATION, 'admin') === false) {
+		$path = DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 	} else {
-		$path = DIR_APPLICATION . 'model/payment/emerchantpay/genesis/vendor/autoload.php';
+		$path = DIR_APPLICATION . 'model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 	}
 
 	require $path;
 }
 
-if (!class_exists('ModelPaymentEmerchantPayBase', false)) {
-	require DIR_CATALOG . 'model/payment/emerchantpay/base_model.php';
+if (!class_exists('ModelExtensionPaymentEmerchantPayBase', false)) {
+	if (strpos(DIR_APPLICATION, 'admin') === false) {
+		$path = DIR_APPLICATION . 'model/extension/payment/emerchantpay/base_model.php';
+	} else {
+		$path = DIR_CATALOG . 'model/extension/payment/emerchantpay/base_model.php';
+	}
+
+	require $path;
 }
 
 /**

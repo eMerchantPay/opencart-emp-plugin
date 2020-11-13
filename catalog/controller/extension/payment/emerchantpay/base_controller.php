@@ -20,10 +20,16 @@
 /**
  * Base Abstract Class for Method Front Controllers
  *
- * Class ControllerPaymentEmerchantPayBase
+ * Class ControllerExtensionPaymentEmerchantPayBase
  */
-abstract class ControllerPaymentEmerchantPayBase extends Controller
+abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 {
+
+
+	/**
+	 * OpenCart custom prefix
+	 */
+	const PLATFORM_TRANSACTION_PREFIX = 'ocart-';
 
 	/**
 	 * Module Name

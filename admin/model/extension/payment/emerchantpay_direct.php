@@ -18,7 +18,7 @@
  */
 
 if (!class_exists('EMerchantPayHelper')) {
-	require_once DIR_APPLICATION . 'model/payment/emerchantpay/EMerchantPayHelper.php';
+	require_once DIR_APPLICATION . 'model/extension/payment/emerchantpay/EMerchantPayHelper.php';
 }
 
 /**
@@ -26,7 +26,7 @@ if (!class_exists('EMerchantPayHelper')) {
  *
  * @package EMerchantPayDirect
  */
-class ModelPaymentEmerchantPayDirect extends Model
+class ModelExtensionPaymentEmerchantPayDirect extends Model
 {
 	/**
 	 * Holds the current module version
@@ -34,7 +34,7 @@ class ModelPaymentEmerchantPayDirect extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.4.5';
+	protected $module_version = '1.4.6';
 
 	/**
 	 * Perform installation logic
@@ -411,7 +411,7 @@ class ModelPaymentEmerchantPayDirect extends Model
 	{
 		$this->bootstrap();
 
-		$this->load->language('payment/emerchantpay_direct');
+		$this->load->language('extension/payment/emerchantpay_direct');
 
 		return array(
 			\Genesis\API\Constants\Transaction\Types::AUTHORIZE    => array(
@@ -456,7 +456,7 @@ class ModelPaymentEmerchantPayDirect extends Model
 
 		$this->bootstrap();
 
-		$this->load->language('payment/emerchantpay_direct');
+		$this->load->language('extension/payment/emerchantpay_direct');
 
 		$types = EMerchantPayHelper::getRecurringTransactionTypes();
 
@@ -500,7 +500,7 @@ class ModelPaymentEmerchantPayDirect extends Model
 	{
 		// Look for, but DO NOT try to load via Auto-loader magic methods
 		if (!class_exists('\Genesis\Genesis', false)) {
-			include DIR_APPLICATION . '/model/payment/emerchantpay/genesis/vendor/autoload.php';
+			include DIR_APPLICATION . '/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 
 			\Genesis\Config::setEndpoint(
 				\Genesis\API\Constants\Endpoints::EMERCHANTPAY

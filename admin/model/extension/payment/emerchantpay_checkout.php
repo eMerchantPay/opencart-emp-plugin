@@ -18,7 +18,7 @@
  */
 
 if (!class_exists('EMerchantPayHelper')) {
-	require_once DIR_APPLICATION . "model/payment/emerchantpay/EMerchantPayHelper.php";
+	require_once DIR_APPLICATION . "model/extension/payment/emerchantpay/EMerchantPayHelper.php";
 }
 
 /**
@@ -26,7 +26,7 @@ if (!class_exists('EMerchantPayHelper')) {
  *
  * @package EMerchantPayCheckout
  */
-class ModelPaymentEmerchantPayCheckout extends Model
+class ModelExtensionPaymentEmerchantPayCheckout extends Model
 {
 	/**
 	 * Holds the current module version
@@ -34,7 +34,7 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.4.5';
+	protected $module_version = '1.4.6';
 
 	/**
 	 * Perform installation logic
@@ -471,7 +471,7 @@ class ModelPaymentEmerchantPayCheckout extends Model
 
 		$this->bootstrap();
 
-		$this->load->language('payment/emerchantpay_checkout');
+		$this->load->language('extension/payment/emerchantpay_checkout');
 
 		$transaction_types = \Genesis\API\Constants\Transaction\Types::getWPFTransactionTypes();
 		$excluded_types    = EMerchantPayHelper::getRecurringTransactionTypes();
@@ -524,7 +524,7 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	{
 		$this->bootstrap();
 
-		$this->load->language('payment/emerchantpay_checkout');
+		$this->load->language('extension/payment/emerchantpay_checkout');
 
 		return array(
 			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE    => array(
@@ -569,7 +569,7 @@ class ModelPaymentEmerchantPayCheckout extends Model
 	public function bootstrap($token = null)
 	{
 		if (!class_exists('\Genesis\Genesis', false)) {
-			include DIR_APPLICATION . '/model/payment/emerchantpay/genesis/vendor/autoload.php';
+			include DIR_APPLICATION . '/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 
 			\Genesis\Config::setEndpoint(
 				\Genesis\API\Constants\Endpoints::EMERCHANTPAY
