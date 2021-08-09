@@ -34,7 +34,7 @@ class ModelExtensionPaymentEmerchantPayDirect extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.4.6';
+	protected $module_version = '1.4.7';
 
 	/**
 	 * Perform installation logic

@@ -324,7 +324,9 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 
 			$this->addTransactionTypesToGatewayRequest($genesis, $data);
 
-			$this->prepareWpfRequestTokenization($genesis);
+			if ($this->isWpfTokenizationEnabled()) {
+				$this->prepareWpfRequestTokenization($genesis);
+			}
 
 			$genesis->execute();
 
@@ -345,9 +347,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 	 */
 	protected function prepareWpfRequestTokenization(\Genesis\Genesis $genesis)
 	{
-		if ($this->isWpfTokenizationEnabled()) {
-			$genesis->request()->setRememberCard(true);
-		}
+		$genesis->request()->setRememberCard(true);
 
 		$consumer_id = $this->getConsumerId($genesis->request()->getCustomerEmail());
 

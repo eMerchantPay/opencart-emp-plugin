@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * OpenCart 3.0.X - 3.0.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
-* [GenesisPHP v1.18.4](https://github.com/GenesisGateway/genesis_php/tree/1.18.4) - (Integrated in Module)
+* [GenesisPHP v1.19.1](https://github.com/GenesisGateway/genesis_php/tree/1.19.1) - (Integrated in Module)
 * PCI-certified server in order to use ```emerchantpay Direct```
 
 GenesisPHP Requirements
@@ -67,6 +67,88 @@ If you are interested in, you could read more about:
 * Handling Recurring Payments with Payment Module
 
 in [wiki for Recurring Payments](https://github.com/emerchantpay/opencart-emp-plugin/wiki/OpenCart-Recurring-Module-Configurations)
+
+Supported Transactions & Payment Methods
+---------------------
+* ```emerchantpay Direct``` Payment Method
+  * __Authorize__
+  * __Authorize (3D-Secure)__
+  * __Sale__
+  * __Sale (3D-Secure)__
+
+* ```emerchantpay Checkout``` Payment Method
+  * __Argencard__
+  * __Aura__
+  * __Authorize__
+  * __Authorize (3D-Secure)__
+  * __Baloto__
+  * __Bancomer__
+  * __Bancontact__
+  * __Banco de Occidente__
+  * __Banco do Brasil__
+  * __BitPay__
+  * __Boleto__
+  * __Bradesco__
+  * __Cabal__
+  * __CashU__
+  * __Cencosud__
+  * __Davivienda__
+  * __Efecty__
+  * __Elo__
+  * __eps__
+  * __eZeeWallet__
+  * __Fashioncheque__
+  * __GiroPay__
+  * __iDeal__
+  * __iDebit__
+  * __InstaDebit__
+  * __InstantTransfer__
+  * __InitRecurringSale__
+  * __InitRecurringSale (3D-Secure)__
+  * __Intersolve__
+  * __Itau__
+  * __Klarna__
+  * __Multibanco__
+  * __MyBank__
+  * __Naranja__
+  * __Nativa__
+  * __Neosurf__
+  * __Neteller__
+  * __Online Banking__
+  * __OXXO__
+  * __P24__
+  * __Pago Facil__
+  * __PayPal Express__
+  * __PaySafeCard__
+  * __PayU__
+  * __POLi__
+  * __Post Finance__
+  * __PPRO__
+    * __eps__
+    * __GiroPay__
+    * __Ideal__
+    * __Przelewy24__
+    * __SafetyPay__
+    * __TrustPay__
+    * __BCMC__
+    * __MyBank__
+  * __PSE__
+  * __RapiPago__
+  * __Redpagos__
+  * __SafetyPay__
+  * __Sale__
+  * __Sale (3D-Secure)__
+  * __Santander__
+  * __Sepa Direct Debit__
+  * __SOFORT__
+  * __Tarjeta Shopping__
+  * __TCS__
+  * __Trustly__
+  * __TrustPay__
+  * __UPI__
+  * __WebMoney__
+  * __WebPay__
+  * __WeChat__
 
 _Note_: If you have trouble with your credentials or terminal configuration, get in touch with our [support] team
 
