@@ -46,6 +46,15 @@ class EMerchantPayHelper
 	const PPRO_TRANSACTION_SUFFIX     = '_ppro';
 	const TRANSACTION_LANGUAGE_PREFIX = 'text_transaction_';
 
+	const GOOGLE_PAY_TRANSACTION_PREFIX     = \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY . '_';
+	const GOOGLE_PAY_PAYMENT_TYPE_AUTHORIZE =
+		\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE;
+	const GOOGLE_PAY_PAYMENT_TYPE_SALE      =
+		\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE;
+
+	const REFERENCE_ACTION_CAPTURE = 'capture';
+	const REFERENCE_ACTION_REFUND  = 'refund';
+
 	/**
 	 * Retrieve Recurring Transaction Types
 	 *

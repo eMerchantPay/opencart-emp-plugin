@@ -577,14 +577,28 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 			$alias_map[$method . self::PPRO_TRANSACTION_SUFFIX] = \Genesis\API\Constants\Transaction\Types::PPRO;
 		}
 
+		$alias_map = array_merge($alias_map, [
+			self::GOOGLE_PAY_TRANSACTION_PREFIX . self::GOOGLE_PAY_PAYMENT_TYPE_AUTHORIZE =>
+				\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY,
+			self::GOOGLE_PAY_TRANSACTION_PREFIX . self::GOOGLE_PAY_PAYMENT_TYPE_SALE      =>
+				\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY
+		]);
+
 		foreach ($selected_types as $selected_type) {
 			if (array_key_exists($selected_type, $alias_map)) {
 				$transaction_type = $alias_map[$selected_type];
 
 				$processed_list[$transaction_type]['name'] = $transaction_type;
 
+				// WPF Custom Attribute
+				$key = ($transaction_type === \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY) ? 'payment_type' : 'payment_method';
+
 				$processed_list[$transaction_type]['parameters'][] = array(
-					'payment_method' => str_replace(self::PPRO_TRANSACTION_SUFFIX, '', $selected_type)
+					$key => str_replace(
+						[self::PPRO_TRANSACTION_SUFFIX, self::GOOGLE_PAY_TRANSACTION_PREFIX],
+						'',
+						$selected_type
+					)
 				);
 			} else {
 				$processed_list[] = $selected_type;

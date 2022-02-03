@@ -34,7 +34,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.4.7';
+	protected $module_version = '1.4.8';
 
 	/**
 	 * Perform installation logic
@@ -482,6 +482,9 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		// Exclude PPRO transaction. This is not standalone transaction type
 		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::PPRO);
 
+		// Exclude GooglePay transaction. In this way Google Pay Payment types will be introduced
+		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY);
+
 		// Exclude Transaction Types
 		$transaction_types = array_diff($transaction_types, $excluded_types);
 
@@ -492,7 +495,19 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			},
 			\Genesis\API\Constants\Payment\Methods::getMethods()
 		);
-		$transaction_types = array_merge($transaction_types, $ppro_types);
+
+		// Add Google Payment types
+		$google_pay_types = array_map(
+			function ($type) {
+				return EMerchantPayHelper::GOOGLE_PAY_TRANSACTION_PREFIX . $type;
+			},
+			[
+				\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE,
+				\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE
+			]
+		);
+
+		$transaction_types = array_merge($transaction_types, $ppro_types, $google_pay_types);
 		asort($transaction_types);
 
 		foreach ($transaction_types as $type) {

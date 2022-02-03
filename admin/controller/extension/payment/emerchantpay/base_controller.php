@@ -21,6 +21,10 @@ if (!class_exists('\Genesis\Genesis', false)) {
 	include DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 }
 
+if (!class_exists('EMerchantPayHelper')) {
+	require_once DIR_APPLICATION . "model/extension/payment/emerchantpay/EMerchantPayHelper.php";
+}
+
 /**
  * Base Abstract Class for Method Admin Controllers
  *
@@ -634,7 +638,16 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			$transaction = $this->getModelInstance()->getTransactionById($reference_id);
 
 			if ($type == 'capture') {
-				$total_authorized_amount         = $this->getModelInstance()->getTransactionsSumAmount($order_id, $transaction['reference_id'], array('authorize', 'authorize3d'), 'approved');
+				$total_authorized_amount         = $this->getModelInstance()->getTransactionsSumAmount(
+					$order_id,
+					$transaction['reference_id'],
+					array(
+						\Genesis\API\Constants\Transaction\Types::AUTHORIZE,
+						\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D,
+						\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY
+					),
+					\Genesis\API\Constants\Transaction\States::APPROVED
+				);
 				$total_captured_amount           = $this->getModelInstance()->getTransactionsSumAmount($order_id, $transaction['unique_id'], 'capture', 'approved');
 				$transaction['available_amount'] = $total_authorized_amount - $total_captured_amount;
 			}
@@ -1368,14 +1381,18 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 */
 	public function canCaptureTransaction($transaction)
 	{
-		return in_array(
-			$transaction['type'],
-			array(
-				\Genesis\API\Constants\Transaction\Types::AUTHORIZE,
-				\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D
-			)
-		)
-		&& $transaction['status'] == \Genesis\API\Constants\Transaction\States::APPROVED;
+		if (!$this->hasApprovedState($transaction['status'])) {
+			return false;
+		}
+
+		if ($this->isTransactionWithCustomAttribute($transaction['type'])) {
+			return $this->checkReferenceActionByCustomAttr(
+				EMerchantPayHelper::REFERENCE_ACTION_CAPTURE,
+				$transaction['type']
+			);
+		}
+
+		return \Genesis\API\Constants\Transaction\Types::canCapture($transaction['type']);
 	}
 
 	/**
@@ -1386,17 +1403,18 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 */
 	public function canRefundTransaction($transaction)
 	{
-		return in_array(
-			$transaction['type'],
-			array(
-				\Genesis\API\Constants\Transaction\Types::CAPTURE,
-				\Genesis\API\Constants\Transaction\Types::SALE,
-				\Genesis\API\Constants\Transaction\Types::SALE_3D,
-				\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE,
-				\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
-			)
-		)
-		&& $transaction['status'] == \Genesis\API\Constants\Transaction\States::APPROVED;
+		if (!$this->hasApprovedState($transaction['status'])) {
+			return false;
+		}
+
+		if ($this->isTransactionWithCustomAttribute($transaction['type'])) {
+			return $this->checkReferenceActionByCustomAttr(
+				EMerchantPayHelper::REFERENCE_ACTION_REFUND,
+				$transaction['type']
+			);
+		}
+
+		return \Genesis\API\Constants\Transaction\Types::canRefund($transaction['type']);
 	}
 
 	/**
@@ -1407,17 +1425,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 */
 	public function canVoidTransaction($transaction)
 	{
-		return in_array(
-			$transaction['type'],
-			array(
-				\Genesis\API\Constants\Transaction\Types::AUTHORIZE,
-				\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D,
-				\Genesis\API\Constants\Transaction\Types::SALE,
-				\Genesis\API\Constants\Transaction\Types::SALE_3D,
-				\Genesis\API\Constants\Transaction\Types::REFUND
-			)
-		)
-		&& $transaction['status'] == \Genesis\API\Constants\Transaction\States::APPROVED;
+		return \Genesis\API\Constants\Transaction\Types::canVoid($transaction['type']) &&
+			$this->hasApprovedState($transaction['status']);
 	}
 
 	/**
@@ -1746,5 +1755,77 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 		}
 
 		return gethostbyname($server_name);
+	}
+
+	/**
+	 * Determine if Google Pay Method is chosen inside the Payment settings
+	 *
+	 * @param string $method GooglePay Method
+	 * @return bool
+	 */
+	protected function isTransactionWithCustomAttribute($transaction_type)
+	{
+		$transaction_types = [
+			\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY
+		];
+
+		return in_array($transaction_type, $transaction_types);
+	}
+
+	/**
+	 * Check if canCapture
+	 *
+	 * @param $action
+	 * @param $transaction_type
+	 * @return bool
+	 */
+	protected function checkReferenceActionByCustomAttr($action, $transaction_type)
+	{
+		$selected_types = $this->config->get("{$this->module_name}_transaction_type");
+
+		if (!is_array($selected_types)) {
+			return false;
+		}
+
+		switch ($transaction_type) {
+			case \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY:
+				if (EMerchantPayHelper::REFERENCE_ACTION_CAPTURE === $action) {
+					return in_array(
+						EMerchantPayHelper::GOOGLE_PAY_TRANSACTION_PREFIX .
+						EMerchantPayHelper::GOOGLE_PAY_PAYMENT_TYPE_AUTHORIZE,
+						$selected_types
+					);
+				}
+
+				if (EMerchantPayHelper::REFERENCE_ACTION_REFUND === $action) {
+					return in_array(
+						EMerchantPayHelper::GOOGLE_PAY_TRANSACTION_PREFIX .
+						EMerchantPayHelper::GOOGLE_PAY_PAYMENT_TYPE_SALE,
+						$selected_types
+					);
+				}
+				break;
+			default:
+				return false;
+		} // end Switch
+
+		return false;
+	}
+
+	/**
+	 * Check if the Genesis Transaction state is APPROVED
+	 *
+	 * @param $transaction_type
+	 * @return bool
+	 */
+	protected function hasApprovedState($transaction_type)
+	{
+		if (empty($transaction_type)) {
+			return false;
+		}
+
+		$state = new \Genesis\API\Constants\Transaction\States($transaction_type);
+
+		return $state->isApproved();
 	}
 }

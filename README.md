@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * OpenCart 3.0.X - 3.0.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
-* [GenesisPHP v1.19.1](https://github.com/GenesisGateway/genesis_php/tree/1.19.1) - (Integrated in Module)
+* [GenesisPHP v1.19.2](https://github.com/GenesisGateway/genesis_php/tree/1.19.2) - (Integrated in Module)
 * PCI-certified server in order to use ```emerchantpay Direct```
 
 GenesisPHP Requirements
@@ -99,6 +99,7 @@ Supported Transactions & Payment Methods
   * __eZeeWallet__
   * __Fashioncheque__
   * __GiroPay__
+  * __GooglePay__
   * __iDeal__
   * __iDebit__
   * __InstaDebit__
