@@ -302,6 +302,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 				->setReturnSuccessUrl($data['return_success_url'])
 				->setReturnFailureUrl($data['return_failure_url'])
 				->setReturnCancelUrl($data['return_cancel_url'])
+				->setReturnPendingUrl($data['return_success_url'])
 				// Billing
 				->setBillingFirstName($data['billing']['first_name'])
 				->setBillingLastName($data['billing']['last_name'])
@@ -581,7 +582,13 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 			self::GOOGLE_PAY_TRANSACTION_PREFIX . self::GOOGLE_PAY_PAYMENT_TYPE_AUTHORIZE =>
 				\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY,
 			self::GOOGLE_PAY_TRANSACTION_PREFIX . self::GOOGLE_PAY_PAYMENT_TYPE_SALE      =>
-				\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY
+				\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY,
+			self::PAYPAL_TRANSACTION_PREFIX . self::PAYPAL_PAYMENT_TYPE_AUTHORIZE         =>
+				\Genesis\API\Constants\Transaction\Types::PAY_PAL,
+			self::PAYPAL_TRANSACTION_PREFIX . self::PAYPAL_PAYMENT_TYPE_SALE              =>
+				\Genesis\API\Constants\Transaction\Types::PAY_PAL,
+			self::PAYPAL_TRANSACTION_PREFIX . self::PAYPAL_PAYMENT_TYPE_EXPRESS           =>
+				\Genesis\API\Constants\Transaction\Types::PAY_PAL,
 		]);
 
 		foreach ($selected_types as $selected_type) {
@@ -591,11 +598,15 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 				$processed_list[$transaction_type]['name'] = $transaction_type;
 
 				// WPF Custom Attribute
-				$key = ($transaction_type === \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY) ? 'payment_type' : 'payment_method';
+				$key = $this->getCustomParameterKey($transaction_type);
 
 				$processed_list[$transaction_type]['parameters'][] = array(
 					$key => str_replace(
-						[self::PPRO_TRANSACTION_SUFFIX, self::GOOGLE_PAY_TRANSACTION_PREFIX],
+						[
+							self::PPRO_TRANSACTION_SUFFIX,
+							self::GOOGLE_PAY_TRANSACTION_PREFIX,
+							self::PAYPAL_TRANSACTION_PREFIX
+						],
 						'',
 						$selected_type
 					)
@@ -766,6 +777,29 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 
 		if ($prev)
 			$result .= "\n" . $this->jTraceEx($prev, $seen);
+
+		return $result;
+	}
+
+	/**
+	 * @param $transaction_type
+	 * @return string
+	 */
+	private function getCustomParameterKey($transaction_type)
+	{
+		switch ($transaction_type) {
+			case \Genesis\API\Constants\Transaction\Types::PPRO:
+				$result = 'payment_method';
+				break;
+			case \Genesis\API\Constants\Transaction\Types::PAY_PAL:
+				$result = 'payment_type';
+				break;
+			case \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY:
+				$result = 'payment_subtype';
+				break;
+			default:
+				$result = 'unknown';
+		}
 
 		return $result;
 	}

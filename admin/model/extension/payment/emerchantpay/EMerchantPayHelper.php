@@ -52,6 +52,14 @@ class EMerchantPayHelper
 	const GOOGLE_PAY_PAYMENT_TYPE_SALE      =
 		\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE;
 
+	const PAYPAL_TRANSACTION_PREFIX         = \Genesis\API\Constants\Transaction\Types::PAY_PAL . '_';
+	const PAYPAL_PAYMENT_TYPE_AUTHORIZE     =
+		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::AUTHORIZE;
+	const PAYPAL_PAYMENT_TYPE_SALE          =
+		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::SALE;
+	const PAYPAL_PAYMENT_TYPE_EXPRESS       =
+		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::EXPRESS;
+
 	const REFERENCE_ACTION_CAPTURE = 'capture';
 	const REFERENCE_ACTION_REFUND  = 'refund';
 
