@@ -645,7 +645,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 						\Genesis\API\Constants\Transaction\Types::AUTHORIZE,
 						\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D,
 						\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY,
-						\Genesis\API\Constants\Transaction\Types::PAY_PAL
+						\Genesis\API\Constants\Transaction\Types::PAY_PAL,
+						\Genesis\API\Constants\Transaction\Types::APPLE_PAY,
 					),
 					\Genesis\API\Constants\Transaction\States::APPROVED
 				);
@@ -1759,7 +1760,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	}
 
 	/**
-	 * Determine if Google Pay or PayPal Method is chosen inside the Payment settings
+	 * Determine if Google Pay, PayPal ot Apple Pay Method is chosen inside the Payment settings
 	 *
 	 * @param string $method GooglePay or PayPal Method
 	 * @return bool
@@ -1768,7 +1769,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	{
 		$transaction_types = [
 			\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY,
-			\Genesis\API\Constants\Transaction\Types::PAY_PAL
+			\Genesis\API\Constants\Transaction\Types::PAY_PAL,
+			\Genesis\API\Constants\Transaction\Types::APPLE_PAY,
 		];
 
 		return in_array($transaction_type, $transaction_types);
@@ -1825,6 +1827,23 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 					];
 
 					return (count(array_intersect($refundable_types, $selected_types)) > 0);
+				}
+				break;
+			case \Genesis\API\Constants\Transaction\Types::APPLE_PAY:
+				if (EMerchantPayHelper::REFERENCE_ACTION_CAPTURE === $action) {
+					return in_array(
+						EMerchantPayHelper::APPLE_PAY_TRANSACTION_PREFIX .
+						EMerchantPayHelper::APPLE_PAY_PAYMENT_TYPE_AUTHORIZE,
+						$selected_types
+					);
+				}
+
+				if (EMerchantPayHelper::REFERENCE_ACTION_REFUND === $action) {
+					return in_array(
+						EMerchantPayHelper::APPLE_PAY_TRANSACTION_PREFIX .
+						EMerchantPayHelper::APPLE_PAY_PAYMENT_TYPE_SALE,
+						$selected_types
+					);
 				}
 				break;
 			default:

@@ -295,7 +295,7 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 				if (isset($transaction['order_id']) && abs((int)$transaction['order_id']) > 0) {
 					if (isset($wpf_reconcile->payment_transaction)) {
 
-						$payment_transaction = $wpf_reconcile->payment_transaction;
+						$payment_transaction = $this->getPaymentTransaction($wpf_reconcile);
 
 						$timestamp = ($payment_transaction->timestamp instanceof \DateTime) ? $payment_transaction->timestamp->format('c') : $payment_transaction->timestamp;
 
@@ -459,5 +459,24 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 		$user_hash = ($user_id > 0) ? sha1($user_id) : $this->model_extension_payment_emerchantpay_checkout->genTransactionId();
 
 		return substr($user_hash, 0, $length);
+	}
+
+	/**
+	* Get the payment transaction or the first element if we have reference transaction
+	*
+	* @param \StdClass $wpf_reconcile
+	* @return \StdClass
+	*/
+	private function getPaymentTransaction($wpf_reconcile)
+	{
+		if (!isset($wpf_reconcile->payment_transaction)) {
+			return $wpf_reconcile;
+		}
+
+		if ($wpf_reconcile->payment_transaction instanceof \ArrayObject) {
+			return $wpf_reconcile->payment_transaction[0];
+		}
+
+		return $wpf_reconcile->payment_transaction;
 	}
 }

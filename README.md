@@ -7,13 +7,13 @@ Requirements
 ------------
 
 * OpenCart 3.0.X - 3.0.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
-* [GenesisPHP v1.20.0](https://github.com/GenesisGateway/genesis_php/tree/1.20.0) - (Integrated in Module)
+* [GenesisPHP v1.20.1](https://github.com/GenesisGateway/genesis_php/tree/1.20.1) - (Integrated in Module)
 * PCI-certified server in order to use ```emerchantpay Direct```
 
 GenesisPHP Requirements
 ------------
 
-* PHP version 5.3.2 or newer
+* PHP version 5.5.9 or newer
 * PHP Extensions:
     * [BCMath](https://php.net/bcmath)
     * [CURL](https://php.net/curl) (required, only if you use the curl network interface)
@@ -77,6 +77,7 @@ Supported Transactions & Payment Methods
   * __Sale (3D-Secure)__
 
 * ```emerchantpay Checkout``` Payment Method
+  * __Apple Pay__ 
   * __Argencard__
   * __Aura__
   * __Authorize__
@@ -99,7 +100,7 @@ Supported Transactions & Payment Methods
   * __eZeeWallet__
   * __Fashioncheque__
   * __GiroPay__
-  * __GooglePay__
+  * __Google Pay__
   * __iDeal__
   * __iDebit__
   * __InstaDebit__

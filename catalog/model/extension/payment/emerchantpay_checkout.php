@@ -589,6 +589,10 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 				\Genesis\API\Constants\Transaction\Types::PAY_PAL,
 			self::PAYPAL_TRANSACTION_PREFIX . self::PAYPAL_PAYMENT_TYPE_EXPRESS           =>
 				\Genesis\API\Constants\Transaction\Types::PAY_PAL,
+			self::APPLE_PAY_TRANSACTION_PREFIX . self::APPLE_PAY_PAYMENT_TYPE_AUTHORIZE   =>
+				\Genesis\API\Constants\Transaction\Types::APPLE_PAY,
+			self::APPLE_PAY_TRANSACTION_PREFIX . self::APPLE_PAY_PAYMENT_TYPE_SALE        =>
+				\Genesis\API\Constants\Transaction\Types::APPLE_PAY,
 		]);
 
 		foreach ($selected_types as $selected_type) {
@@ -605,7 +609,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 						[
 							self::PPRO_TRANSACTION_SUFFIX,
 							self::GOOGLE_PAY_TRANSACTION_PREFIX,
-							self::PAYPAL_TRANSACTION_PREFIX
+							self::PAYPAL_TRANSACTION_PREFIX,
+							self::APPLE_PAY_TRANSACTION_PREFIX
 						],
 						'',
 						$selected_type
@@ -795,6 +800,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 				$result = 'payment_type';
 				break;
 			case \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY:
+			case \Genesis\API\Constants\Transaction\Types::APPLE_PAY:
 				$result = 'payment_subtype';
 				break;
 			default:

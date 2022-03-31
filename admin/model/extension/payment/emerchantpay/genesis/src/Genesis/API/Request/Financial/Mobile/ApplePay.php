@@ -23,14 +23,14 @@
 
 namespace Genesis\API\Request\Financial\Mobile;
 
-use Genesis\API\Traits\Request\DocumentAttributes;
+use Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes as ApplePaySubtypes;
 use Genesis\API\Traits\Request\AddressInfoAttributes;
+use Genesis\API\Traits\Request\DocumentAttributes;
 use Genesis\API\Traits\Request\Financial\BirthDateAttributes;
 use Genesis\API\Traits\Request\Financial\Business\BusinessAttributes;
 use Genesis\API\Traits\Request\Financial\CryptoAttributes;
 use Genesis\API\Traits\Request\Financial\PaymentAttributes;
 use Genesis\API\Traits\Request\Mobile\ApplePayAttributes;
-use Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePayParameters;
 use Genesis\API\Traits\RestrictedSetter;
 use Genesis\Exceptions\InvalidArgument;
 use Genesis\Utils\Common as CommonUtils;
@@ -85,7 +85,7 @@ class ApplePay extends \Genesis\API\Request\Base\Financial
     {
         $requiredFields = [
             'transaction_id',
-            'payment_type',
+            'payment_subtype',
             'token_version',
             'token_data',
             'token_signature',
@@ -104,8 +104,8 @@ class ApplePay extends \Genesis\API\Request\Base\Financial
 
         $requiredFieldValues = array_merge(
             [
-                'currency'     => \Genesis\Utils\Currency::getList(),
-                'payment_type' => ApplePayParameters::getAllowedPaymentTypes()
+                'currency'        => \Genesis\Utils\Currency::getList(),
+                'payment_subtype' => ApplePaySubtypes::getAllowedPaymentTypes()
             ]
         );
 
@@ -123,7 +123,7 @@ class ApplePay extends \Genesis\API\Request\Base\Financial
             'amount'              => $this->transformAmount($this->amount, $this->currency),
             'currency'            => $this->currency,
             'remote_ip'           => $this->remote_ip,
-            'payment_type'        => $this->payment_type,
+            'payment_subtype'     => $this->payment_subtype,
             'payment_token'       => $this->getPaymentTokenStructure(),
             'customer_email'      => $this->customer_email,
             'customer_phone'      => $this->customer_phone,

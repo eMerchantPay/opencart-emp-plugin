@@ -48,6 +48,12 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 	const PAYPAL_PAYMENT_TYPE_EXPRESS       =
 		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::EXPRESS;
 
+	const APPLE_PAY_TRANSACTION_PREFIX      = \Genesis\API\Constants\Transaction\Types::APPLE_PAY . '_';
+	const APPLE_PAY_PAYMENT_TYPE_AUTHORIZE  =
+		\Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::AUTHORIZE;
+	const APPLE_PAY_PAYMENT_TYPE_SALE       =
+		\Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::SALE;
+
 	/**
 	 * Max. number of records of the cron log
 	 */
