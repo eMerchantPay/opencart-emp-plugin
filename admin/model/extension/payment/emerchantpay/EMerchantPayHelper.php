@@ -212,4 +212,15 @@ class EMerchantPayHelper
 
 		return $tax;
 	}
+
+	/**
+	 * Return list of available Bank Codes for Online banking
+	 *
+	 * @return array
+	 */
+	public static function getAvailableBankCodes() {
+		return [
+			\Genesis\API\Constants\Banks::CPI => 'Interac Combined Pay-in'
+		];
+	}
 }

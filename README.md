@@ -117,6 +117,7 @@ Supported Transactions & Payment Methods
   * __Neosurf__
   * __Neteller__
   * __Online Banking__
+    * __Interac Combined Pay-in (CPI)__ 
   * __OXXO__
   * __P24__
   * __Pago Facil__

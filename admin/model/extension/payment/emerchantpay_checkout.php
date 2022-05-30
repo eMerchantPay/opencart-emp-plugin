@@ -34,7 +34,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.5.0';
+	protected $module_version = '1.5.1';
 
 	/**
 	 * Perform installation logic
@@ -560,6 +560,26 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 				'id'   => $type,
 				'name' => $name
 			);
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Returns formatted array with available Bank codes
+	 *
+	 * @return array
+	 */
+	public function getBankCodes()
+	{
+		$data = [];
+		$available_bank_codes = EMerchantPayHelper::getAvailableBankCodes();
+
+		foreach ($available_bank_codes as $value => $label) {
+			$data[] = [
+				'id'   => $value,
+				'name' => $label
+			];
 		}
 
 		return $data;

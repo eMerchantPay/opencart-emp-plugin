@@ -108,6 +108,22 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label class="col-sm-2 control-label" for="<?php echo $module_name;?>_bank_codes">
+                                    <?php echo $entry_bank_codes; ?>
+                                </label>
+                                <div class="col-sm-10">
+                                    <select id="<?php echo $module_name;?>_bank_codes" name="<?php echo $module_name;?>_bank_codes[]" class="form-control" multiple="multiple">
+                                        <?php foreach ($bank_codes as $bank_code) { ?>
+                                        <?php if (is_array($emerchantpay_checkout_bank_codes) && in_array($bank_code['id'], $emerchantpay_checkout_bank_codes)) { ?>
+                                        <option value="<?php echo $bank_code['id']; ?>" selected="selected"><?php echo $bank_code['name']; ?></option>
+                                        <?php } else { ?>
+                                        <option value="<?php echo $bank_code['id']; ?>"><?php echo $bank_code['name']; ?></option>
+                                        <?php } ?>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label class="col-sm-2 control-label" for="input-status">
                                     <?php echo $entry_wpf_tokenization; ?>
                                 </label>

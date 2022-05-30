@@ -313,13 +313,14 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 		$data = $this->buildLanguagePhrases();
 
 		$data += array(
-			'module_version' => $this->getModelInstance()->getVersion(),
+			'module_version'              => $this->getModelInstance()->getVersion(),
 			'geo_zones'                   => $this->model_localisation_geo_zone->getGeoZones(),
 			'order_statuses'              => $this->model_localisation_order_status->getOrderStatuses(),
 			'transaction_types'           => $this->getModelInstance()->getTransactionTypes(),
 			'recurring_transaction_types' => $this->getModelInstance()->getRecurringTransactionTypes(),
-			'error_warning'              => isset($this->error['warning']) ? $this->error['warning'] : '',
-			'enable_recurring_tab'       => $this->isVersion22OrAbove(),
+			'error_warning'               => isset($this->error['warning']) ? $this->error['warning'] : '',
+			'enable_recurring_tab'        => $this->isVersion22OrAbove(),
+			'bank_codes'                  => $this->getModelInstance()->getBankCodes(),
 
 			// Settings
 			"{$this->module_name}_username"                   => $this->getFieldValue("{$this->module_name}_username"),
@@ -344,6 +345,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			"{$this->module_name}_recurring_token"            => $this->getFieldValue("{$this->module_name}_recurring_token"),
 			"{$this->module_name}_cron_allowed_ip"            => $this->getFieldValue("{$this->module_name}_cron_allowed_ip"),
 			"{$this->module_name}_cron_time_limit"            => $this->getFieldValue("{$this->module_name}_cron_time_limit"),
+			"{$this->module_name}_bank_codes"                 => $this->getFieldValue("{$this->module_name}_bank_codes"),
 
 			'action' => $this->url->link("{$this->route_prefix}payment/{$this->module_name}", $this->getTokenParam() . '=' . $this->getToken(), 'SSL'),
 			'cancel' =>	$this->getPaymentLink($this->getToken()),
@@ -439,6 +441,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			'entry_cron_time_limit',
 			'entry_cron_allowed_ip',
 			'entry_cron_last_execution',
+			'entry_bank_codes',
 
 			'entry_order_status',
 			'entry_async_order_status',

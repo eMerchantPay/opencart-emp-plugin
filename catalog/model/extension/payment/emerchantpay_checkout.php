@@ -684,6 +684,18 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 					'user_id' => $user_id
 				);
 				break;
+			case \Genesis\API\Constants\Transaction\Types::ONLINE_BANKING_PAYIN:
+				$selected_bank_codes = $this->config->get('emerchantpay_checkout_bank_codes');
+
+				if (\Genesis\Utils\Common::isValidArray($selected_bank_codes)) {
+					$parameters['bank_codes'] = array_map(
+						function ($value) {
+							return ['bank_code' => $value];
+						},
+						$selected_bank_codes
+					);
+				}
+				break;
 		}
 
 		return $parameters;
