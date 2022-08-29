@@ -34,7 +34,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.5.1';
+	protected $module_version = '1.5.2';
 
 	/**
 	 * Perform installation logic
@@ -135,9 +135,11 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		$transactions = $this->getTransactionsByTypeAndStatus($order_id, $reference_id, $types, $status);
 		$total_amount = 0;
 
-		/** @var $transaction */
-		foreach ($transactions as $transaction) {
-			$total_amount +=  $transaction['amount'];
+		if ($transactions) {
+			/** @var $transaction */
+			foreach ($transactions as $transaction) {
+				$total_amount += $transaction['amount'];
+			}
 		}
 
 		return $total_amount;
@@ -264,13 +266,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	public function populateTransaction($data = array())
 	{
 		try {
-			$self = $this;
-
-			// Sanitize the input data
-			array_walk($data, function (&$column, &$value) use ($self) {
-				$column = $self->db->escape($column);
-				$value  = $self->db->escape($value);
-			});
+			$data = EMerchantPayHelper::sanitizeData($data, $this);
 
 			// Check if transaction exists
 			$insert_query = $this->db->query("
@@ -300,12 +296,12 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 * @param string $amount Amount to be refunded
 	 * @param string $currency Currency for the refunded amount
 	 * @param string $usage Usage (optional text)
-	 * @param string $token Terminal token of the initial transaction
 	 * @param int    $order_id
+	 * @param string $token Terminal token of the initial transaction
 	 *
 	 * @return object
 	 */
-	public function capture($type, $reference_id, $amount, $currency, $usage = '', $token = null, $order_id)
+	public function capture($type, $reference_id, $amount, $currency, $usage, $order_id, $token = null)
 	{
 		try {
 			$this->bootstrap($token);

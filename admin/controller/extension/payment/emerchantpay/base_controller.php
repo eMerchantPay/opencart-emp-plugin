@@ -320,7 +320,6 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			'recurring_transaction_types' => $this->getModelInstance()->getRecurringTransactionTypes(),
 			'error_warning'               => isset($this->error['warning']) ? $this->error['warning'] : '',
 			'enable_recurring_tab'        => $this->isVersion22OrAbove(),
-			'bank_codes'                  => $this->getModelInstance()->getBankCodes(),
 
 			// Settings
 			"{$this->module_name}_username"                   => $this->getFieldValue("{$this->module_name}_username"),
@@ -359,6 +358,12 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 
 			'module_name' => $this->module_name
 		);
+
+		if ($this->module_name == 'emerchantpay_checkout') {
+			$data += [
+				'bank_codes' => $this->getModelInstance()->getBankCodes()
+			];
+		}
 
 		$default_param_values = array(
 			"{$this->module_name}_sandbox"                  => 1,
@@ -739,8 +744,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 					$amount,
 					$transaction['currency'],
 					empty($message) ? 'Capture Opencart Transaction' : $message,
-					$terminal_token,
-					$transaction['order_id']
+					$transaction['order_id'],
+					$terminal_token
 				);
 
 				if (isset($capture->unique_id)) {

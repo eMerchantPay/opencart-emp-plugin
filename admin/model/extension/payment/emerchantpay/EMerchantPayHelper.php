@@ -223,4 +223,21 @@ class EMerchantPayHelper
 			\Genesis\API\Constants\Banks::CPI => 'Interac Combined Pay-in'
 		];
 	}
+
+	/**
+	 * Sanitize data before insert into DB
+	 * @param $data
+	 * @param $model
+	 * @return array
+	 */
+	public static function sanitizeData($data, $model)
+	{
+		$result = array();
+
+		array_walk($data, function ($value, $key) use ($model, &$result) {
+			$result[$model->db->escape($key)] = $model->db->escape($value);
+		});
+
+		return $result;
+	}
 }
