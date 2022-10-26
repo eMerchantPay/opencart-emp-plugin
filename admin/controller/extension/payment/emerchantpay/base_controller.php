@@ -17,6 +17,9 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+use Genesis\API\Constants\Transaction\Parameters\ScaExemptions;
+use Genesis\API\Constants\Transaction\Parameters\Threeds\V2\Control\ChallengeIndicators;
+
 if (!class_exists('\Genesis\Genesis', false)) {
 	include DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 }
@@ -72,7 +75,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 		'transaction_type',
 		'order_status',
 		'order_async_status',
-		'order_failure_status'
+		'order_failure_status',
+		'error_sca_exemption_amount'
 	);
 
 	/**
@@ -322,29 +326,33 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			'enable_recurring_tab'        => $this->isVersion22OrAbove(),
 
 			// Settings
-			"{$this->module_name}_username"                   => $this->getFieldValue("{$this->module_name}_username"),
-			"{$this->module_name}_password"                   => $this->getFieldValue("{$this->module_name}_password"),
-			"{$this->module_name}_token"                      => $this->getFieldValue("{$this->module_name}_token"),
-			"{$this->module_name}_sandbox"                    => $this->getFieldValue("{$this->module_name}_sandbox"),
-			"{$this->module_name}_transaction_type"           => $this->getFieldValue("{$this->module_name}_transaction_type"),
-			"{$this->module_name}_wpf_tokenization"           => $this->getFieldValue("{$this->module_name}_wpf_tokenization"),
-			"{$this->module_name}_total"                      => $this->getFieldValue("{$this->module_name}_total"),
-			"{$this->module_name}_order_status_id"            => $this->getFieldValue("{$this->module_name}_order_status_id"),
-			"{$this->module_name}_order_failure_status_id"    => $this->getFieldValue("{$this->module_name}_order_failure_status_id"),
-			"{$this->module_name}_async_order_status_id"      => $this->getFieldValue("{$this->module_name}_async_order_status_id"),
-			"{$this->module_name}_geo_zone_id"                => $this->getFieldValue("{$this->module_name}_geo_zone_id"),
-			"{$this->module_name}_status"                     => $this->getFieldValue("{$this->module_name}_status"),
-			"{$this->module_name}_sort_order"                 => $this->getFieldValue("{$this->module_name}_sort_order"),
-			"{$this->module_name}_debug"                      => $this->getFieldValue("{$this->module_name}_debug"),
-			"{$this->module_name}_supports_partial_capture"   => $this->getFieldValue("{$this->module_name}_supports_partial_capture"),
-			"{$this->module_name}_supports_partial_refund"    => $this->getFieldValue("{$this->module_name}_supports_partial_refund"),
-			"{$this->module_name}_supports_void"              => $this->getFieldValue("{$this->module_name}_supports_void"),
-			"{$this->module_name}_supports_recurring"         => $this->getFieldValue("{$this->module_name}_supports_recurring"),
-			"{$this->module_name}_recurring_transaction_type" => $this->getFieldValue("{$this->module_name}_recurring_transaction_type"),
-			"{$this->module_name}_recurring_token"            => $this->getFieldValue("{$this->module_name}_recurring_token"),
-			"{$this->module_name}_cron_allowed_ip"            => $this->getFieldValue("{$this->module_name}_cron_allowed_ip"),
-			"{$this->module_name}_cron_time_limit"            => $this->getFieldValue("{$this->module_name}_cron_time_limit"),
-			"{$this->module_name}_bank_codes"                 => $this->getFieldValue("{$this->module_name}_bank_codes"),
+			"{$this->module_name}_username"                    => $this->getFieldValue("{$this->module_name}_username"),
+			"{$this->module_name}_password"                    => $this->getFieldValue("{$this->module_name}_password"),
+			"{$this->module_name}_token"                       => $this->getFieldValue("{$this->module_name}_token"),
+			"{$this->module_name}_sandbox"                     => $this->getFieldValue("{$this->module_name}_sandbox"),
+			"{$this->module_name}_transaction_type"            => $this->getFieldValue("{$this->module_name}_transaction_type"),
+			"{$this->module_name}_wpf_tokenization"            => $this->getFieldValue("{$this->module_name}_wpf_tokenization"),
+			"{$this->module_name}_total"                       => $this->getFieldValue("{$this->module_name}_total"),
+			"{$this->module_name}_order_status_id"             => $this->getFieldValue("{$this->module_name}_order_status_id"),
+			"{$this->module_name}_order_failure_status_id"     => $this->getFieldValue("{$this->module_name}_order_failure_status_id"),
+			"{$this->module_name}_async_order_status_id"       => $this->getFieldValue("{$this->module_name}_async_order_status_id"),
+			"{$this->module_name}_geo_zone_id"                 => $this->getFieldValue("{$this->module_name}_geo_zone_id"),
+			"{$this->module_name}_status"                      => $this->getFieldValue("{$this->module_name}_status"),
+			"{$this->module_name}_sort_order"                  => $this->getFieldValue("{$this->module_name}_sort_order"),
+			"{$this->module_name}_debug"                       => $this->getFieldValue("{$this->module_name}_debug"),
+			"{$this->module_name}_supports_partial_capture"    => $this->getFieldValue("{$this->module_name}_supports_partial_capture"),
+			"{$this->module_name}_supports_partial_refund"     => $this->getFieldValue("{$this->module_name}_supports_partial_refund"),
+			"{$this->module_name}_supports_void"               => $this->getFieldValue("{$this->module_name}_supports_void"),
+			"{$this->module_name}_supports_recurring"          => $this->getFieldValue("{$this->module_name}_supports_recurring"),
+			"{$this->module_name}_recurring_transaction_type"  => $this->getFieldValue("{$this->module_name}_recurring_transaction_type"),
+			"{$this->module_name}_recurring_token"             => $this->getFieldValue("{$this->module_name}_recurring_token"),
+			"{$this->module_name}_cron_allowed_ip"             => $this->getFieldValue("{$this->module_name}_cron_allowed_ip"),
+			"{$this->module_name}_cron_time_limit"             => $this->getFieldValue("{$this->module_name}_cron_time_limit"),
+			"{$this->module_name}_bank_codes"                  => $this->getFieldValue("{$this->module_name}_bank_codes"),
+			"{$this->module_name}_threeds_allowed"             => $this->getFieldValue("{$this->module_name}_threeds_allowed"),
+			"{$this->module_name}_threeds_challenge_indicator" => $this->getFieldValue("{$this->module_name}_threeds_challenge_indicator"),
+			"{$this->module_name}_sca_exemption"               => $this->getFieldValue("{$this->module_name}_sca_exemption"),
+			"{$this->module_name}_sca_exemption_amount"        => $this->getFieldValue("{$this->module_name}_sca_exemption_amount"),
 
 			'action' => $this->url->link("{$this->route_prefix}payment/{$this->module_name}", $this->getTokenParam() . '=' . $this->getToken(), 'SSL'),
 			'cancel' =>	$this->getPaymentLink($this->getToken()),
@@ -361,20 +369,26 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 
 		if ($this->module_name == 'emerchantpay_checkout') {
 			$data += [
-				'bank_codes' => $this->getModelInstance()->getBankCodes()
+				'bank_codes'                   => $this->getModelInstance()->getBankCodes(),
+				'threeds_challenge_indicators' => $this->getModelInstance()->getThreedsChallengeIndicators(),
+				'sca_exemptions'               => $this->getModelInstance()->getScaExemptions()
 			];
 		}
 
 		$default_param_values = array(
-			"{$this->module_name}_sandbox"                  => 1,
-			"{$this->module_name}_status"                   => 0,
-			"{$this->module_name}_debug"                    => 1,
-			"{$this->module_name}_supports_partial_capture" => 1,
-			"{$this->module_name}_supports_partial_refund"  => 1,
-			"{$this->module_name}_supports_void"            => 1,
-			"{$this->module_name}_supports_recurring"       => 0,
-			"{$this->module_name}_cron_allowed_ip"          => $this->getServerAddress(),
-			"{$this->module_name}_cron_time_limit"          => 25
+			"{$this->module_name}_sandbox"                     => 1,
+			"{$this->module_name}_status"                      => 0,
+			"{$this->module_name}_debug"                       => 1,
+			"{$this->module_name}_supports_partial_capture"    => 1,
+			"{$this->module_name}_supports_partial_refund"     => 1,
+			"{$this->module_name}_supports_void"               => 1,
+			"{$this->module_name}_supports_recurring"          => 0,
+			"{$this->module_name}_cron_allowed_ip"             => $this->getServerAddress(),
+			"{$this->module_name}_cron_time_limit"             => 25,
+			"{$this->module_name}_threeds_allowed"             => 1,
+			"{$this->module_name}_threeds_challenge_indicator" => ChallengeIndicators::NO_PREFERENCE,
+			"{$this->module_name}_sca_exemption"               => ScaExemptions::EXEMPTION_LOW_RISK,
+			"{$this->module_name}_sca_exemption_amount"        => 100,
 		);
 
 		foreach ($default_param_values as $key => $default_value)
@@ -447,6 +461,10 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			'entry_cron_allowed_ip',
 			'entry_cron_last_execution',
 			'entry_bank_codes',
+			'entry_threeds_allowed',
+			'entry_threeds_challenge_indicator',
+			'entry_sca_exemption',
+			'entry_sca_exemption_value',
 
 			'entry_order_status',
 			'entry_async_order_status',
@@ -475,6 +493,10 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			'help_cron_time_limit',
 			'help_cron_allowed_ip',
 			'help_cron_last_execution',
+			'help_threeds_allowed',
+			'help_threeds_challenge_indicator',
+			'help_sca_exemption',
+			'help_sca_exemption_value',
 
 			'button_save',
 			'button_cancel',
@@ -1107,6 +1129,10 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 
 		if ($this->module_name === 'emerchantpay_direct' && empty($this->request->post["{$this->module_name}_async_order_status_id"])) {
 			$this->error['order_async_status'] = $this->language->get('error_async_order_status');
+		}
+
+		if ($this->module_name === 'emerchantpay_checkout' && ((float)$this->request->post["{$this->module_name}_sca_exemption_amount"] < 0)) {
+			$this->error['error_sca_exemption_amount'] = $this->language->get('error_sca_exemption_amount');
 		}
 
 		return !$this->error;

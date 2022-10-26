@@ -24,6 +24,9 @@ if (!class_exists('\Genesis\Genesis', false)) {
 if (!class_exists('EmerchantPayHelper', false)) {
 	include DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/EMerchantPayHelper.php';
 }
+if (!class_exists('EmerchantPayThreedsHelper', false)) {
+	include DIR_APPLICATION . '/../catalog/controller/extension/payment/emerchantpay/EMerchantPayThreedsHelper.php';
+}
 
 /**
  * Base Abstract Model for Method Models

@@ -138,6 +138,67 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label class="col-sm-2 control-label" for="emerchantpay_checkout_threeds_allowed">
+                                    <span data-toggle="tooltip" title="<?php echo $help_threeds_allowed; ?>">
+                                        <?php echo $entry_threeds_allowed; ?>
+                                    </span>
+                                </label>
+                                <div class="col-sm-10 bootstrap-checkbox-holder">
+                                    <input type="hidden" name="emerchantpay_checkout_threeds_allowed"
+                                           value="<?php echo $emerchantpay_checkout_threeds_allowed;?>" />
+                                    <input type="checkbox" class="bootstrap-checkbox" id="emerchantpay_checkout_threeds_allowed"
+                                    <?php if ($emerchantpay_checkout_threeds_allowed) { ?>
+                                    checked="checked"
+                                    <?php } ?>
+                                    />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="emerchantpay_checkout_threeds_challenge_indicator">
+                                    <span data-toggle="tooltip" title="<?php echo $help_threeds_challenge_indicator; ?>">
+                                        <?php echo $entry_threeds_challenge_indicator; ?>
+                                    </span>
+                                </label>
+                                <div class="col-sm-10">
+                                    <select name="emerchantpay_checkout_threeds_challenge_indicator" id="emerchantpay_checkout_threeds_challenge_indicator" class="form-control">
+                                        <?php foreach ($threeds_challenge_indicators as $threeds_challenge_indicator) { ?>
+                                        <?php if ($threeds_challenge_indicator['id'] == $emerchantpay_checkout_threeds_challenge_indicator) { ?>
+                                        <option value="<?php echo $threeds_challenge_indicator['id']; ?>" selected="selected"><?php echo $threeds_challenge_indicator['name']; ?></option>
+                                        <?php } else { ?>
+                                        <option value="<?php echo $threeds_challenge_indicator['id']; ?>"><?php echo $threeds_challenge_indicator['name']; ?></option>
+                                        <?php } ?>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="emerchantpay_checkout_sca_exemption">
+                                    <span data-toggle="tooltip" title="<?php echo $help_sca_exemption; ?>">
+                                        <?php echo $entry_sca_exemption; ?>
+                                    </span>
+                                </label>
+                                <div class="col-sm-10">
+                                    <select name="emerchantpay_checkout_sca_exemption" id="emerchantpay_checkout_sca_exemption" class="form-control">
+                                        <?php foreach ($sca_exemptions as $sca_exemption) { ?>
+                                        <?php $selected = ($sca_exemption['id'] == $emerchantpay_checkout_sca_exemption) ? ' selected="selected" ' : ''; ?>
+                                        <option value="<?php echo $sca_exemption['id']; ?>"<?php echo $selected; ?>>
+                                            <?php echo $sca_exemption['name']; ?>
+                                        </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="input-sca_exemption_amount">
+                            <span data-toggle="tooltip" title="<?php echo $help_sca_exemption_amount; ?>">
+                                <?php echo $entry_sca_exemption_amount; ?>
+                            </span>
+                                </label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="emerchantpay_checkout_sca_exemption_amount" value="<?php echo $emerchantpay_checkout_sca_exemption_amount; ?>" placeholder="<?php echo $entry_sca_exemption_amount; ?>" id="input-sca_exemption_amount" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label class="col-sm-2 control-label">
                             <span data-toggle="tooltip" title="<?php echo $help_supports_partial_capture; ?>">
                                 <?php echo $entry_supports_partial_capture;?>

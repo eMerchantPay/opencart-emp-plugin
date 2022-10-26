@@ -17,6 +17,9 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+use Genesis\API\Constants\Transaction\Parameters\Threeds\V2\Control\ChallengeIndicators;
+use Genesis\API\Constants\Transaction\Parameters\ScaExemptions;
+
 if (!class_exists('EMerchantPayHelper')) {
 	require_once DIR_APPLICATION . "model/extension/payment/emerchantpay/EMerchantPayHelper.php";
 }
@@ -34,7 +37,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.5.2';
+	protected $module_version = '1.6.0';
 
 	/**
 	 * Perform installation logic
@@ -579,6 +582,55 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Returns formatted array with available threeds challenge indicators
+	 *
+	 * @return array
+	 */
+	public function getThreedsChallengeIndicators()
+	{
+		$data                 = [];
+		$challenge_indicators = [
+			ChallengeIndicators::NO_PREFERENCE          => 'No preference',
+			ChallengeIndicators::NO_CHALLENGE_REQUESTED => 'No challenge requested',
+			ChallengeIndicators::PREFERENCE             => 'Preference',
+			ChallengeIndicators::MANDATE                => 'Mandate'
+		];
+
+		foreach ($challenge_indicators as $value => $label) {
+			$data[] = [
+				'id'   => $value,
+				'name' => $label
+			];
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Returns formatted array with available SCA Exemptions
+	 *
+	 * @return array
+	 */
+	public function getScaExemptions()
+	{
+		$data           = [];
+		$sca_exemptions = [
+			ScaExemptions::EXEMPTION_LOW_RISK  => 'Low risk',
+			ScaExemptions::EXEMPTION_LOW_VALUE => 'Low value',
+		];
+
+		foreach ($sca_exemptions as $value => $label) {
+			$data[] = [
+				'id'   => $value,
+				'name' => $label
+			];
+		}
+
+		return $data;
+
 	}
 
 	/**

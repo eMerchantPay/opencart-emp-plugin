@@ -43,30 +43,34 @@ HTML;
 $_['text_select_status']         = 'Select Status';
 
 // Entry
-$_['entry_username']                   = 'Genesis Username';
-$_['entry_password']                   = 'Genesis Password';
-$_['entry_token']                      = 'Genesis Token';
-$_['entry_sandbox']                    = 'Test Mode';
-$_['entry_transaction_type']           = 'Transaction Types';
-$_['entry_wpf_tokenization']           = 'WPF Tokenization Enabled';
-$_['entry_supports_partial_capture']   = 'Partial Capture';
-$_['entry_supports_partial_refund']    = 'Partial Refund';
-$_['entry_supports_void']              = 'Cancel Transaction';
-$_['entry_total']                      = 'Total';
-$_['entry_order_status']               = 'Order Status';
-$_['entry_order_status_failure']       = 'Order Status (Failed)';
-$_['entry_geo_zone']                   = 'Geo Zone';
-$_['entry_status']                     = 'Status';
-$_['entry_debug']                      = 'Error Logging';
-$_['entry_sort_order']                 = 'Sort Order';
-$_['entry_supports_recurring']         = 'Recurring Payments';
-$_['entry_recurring_transaction_type'] = 'Recurring Transaction Types';
-$_['entry_recurring_log']              = 'Recurring Log';
-$_['entry_recurring_token']            = 'Recurring Token';
-$_['entry_cron_time_limit']            = 'Processing time for re-billing';
-$_['entry_cron_allowed_ip']            = 'IP address';
-$_['entry_cron_last_execution']        = 'Cron/schtasks last execution';
-$_['entry_bank_codes']                 = 'Bank code(s) for Online banking';
+$_['entry_username']                    = 'Genesis Username';
+$_['entry_password']                    = 'Genesis Password';
+$_['entry_token']                       = 'Genesis Token';
+$_['entry_sandbox']                     = 'Test Mode';
+$_['entry_transaction_type']            = 'Transaction Types';
+$_['entry_wpf_tokenization']            = 'WPF Tokenization Enabled';
+$_['entry_supports_partial_capture']    = 'Partial Capture';
+$_['entry_supports_partial_refund']     = 'Partial Refund';
+$_['entry_supports_void']               = 'Cancel Transaction';
+$_['entry_total']                       = 'Total';
+$_['entry_order_status']                = 'Order Status';
+$_['entry_order_status_failure']        = 'Order Status (Failed)';
+$_['entry_geo_zone']                    = 'Geo Zone';
+$_['entry_status']                      = 'Status';
+$_['entry_debug']                       = 'Error Logging';
+$_['entry_sort_order']                  = 'Sort Order';
+$_['entry_supports_recurring']          = 'Recurring Payments';
+$_['entry_recurring_transaction_type']  = 'Recurring Transaction Types';
+$_['entry_recurring_log']               = 'Recurring Log';
+$_['entry_recurring_token']             = 'Recurring Token';
+$_['entry_cron_time_limit']             = 'Processing time for re-billing';
+$_['entry_cron_allowed_ip']             = 'IP address';
+$_['entry_cron_last_execution']         = 'Cron/schtasks last execution';
+$_['entry_bank_codes']                  = 'Bank code(s) for Online banking';
+$_['entry_threeds_allowed']             = 'Enable 3DSv2';
+$_['entry_threeds_challenge_indicator'] = '3DSv2 Challenge';
+$_['entry_sca_exemption']               = 'SCA Exemption';
+$_['entry_sca_exemption_amount']        = 'Exemption Amount';
 
 // Transaction Types
 $_ = array_merge($_, EMerchantPayHelper::getTransactionTypeNames());
@@ -144,6 +148,10 @@ $_['help_recurring_log']                             = "This is a log of the re-
 $_['help_cron_time_limit']                           = 'Тhe total time in seconds allowed for re-billing recurring orders in a single execution of the cron / schtasks. If there is a re-billing in process while reaching this limit, it will try to continue and respectively the execution time will exceed the allowed time.';
 $_['help_cron_allowed_ip']                           = 'The IP address allowed to send HTTP requests to the cron-handling URLs.';
 $_['help_cron_last_execution']                       = 'The time the cron / schtasks was last executed.';
+$_['help_threeds_allowed']                           = 'Enable 3DSv2 optional parameters.';
+$_['help_threeds_challenge_indicator']               = 'The value has weight and might impact the decision whether a challenge will be required for the transaction or not.';
+$_['help_sca_exemption']                             = 'Exemption for the Strong Customer Authentication.';
+$_['help_sca_exemption_amount']                      = 'Exemption Amount determinate if the SCA Exemption should be included in the request to the Gateway.';
 
 // Error
 $_['error_permission']           = 'Warning: You do not have permission to modify payment module emerchantpay!';
@@ -153,6 +161,7 @@ $_['error_transaction_type']     = 'You have to select at least one transaction 
 $_['error_controls_invalidated'] = 'Warning: You have to fill-in all the required fields';
 $_['error_order_status']         = 'Order Status is Required';
 $_['error_order_failure_status'] = 'Order Status (Failed) is Required';
+$_['error_sca_exemption_amount'] = 'SCA Exemption amount must have positive value';
 
 //Alert
 $_['alert_disable_recurring']    = 'Warning: Disabling the Recurring Payments disables placing new recurring orders. It does not disable the re-billing of the existing ones.';
