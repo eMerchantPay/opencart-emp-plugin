@@ -659,8 +659,6 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 	{
 		if (!empty($this->config->get($this->module_name . '_recurring_token'))) {
 			$result = $this->config->get($this->module_name . '_recurring_token');
-		} elseif ($this->module_name == 'emerchantpay_direct') {
-			$result = $this->config->get('emerchantpay_direct_token');
 		} else {
 			$result = array_key_exists('terminal_token', $transaction) ? $transaction['terminal_token'] : null;
 		}

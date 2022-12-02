@@ -1127,10 +1127,6 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			$this->error['order_failure_status'] = $this->language->get('error_order_failure_status');
 		}
 
-		if ($this->module_name === 'emerchantpay_direct' && empty($this->request->post["{$this->module_name}_async_order_status_id"])) {
-			$this->error['order_async_status'] = $this->language->get('error_async_order_status');
-		}
-
 		if ($this->module_name === 'emerchantpay_checkout' && ((float)$this->request->post["{$this->module_name}_sca_exemption_amount"] < 0)) {
 			$this->error['error_sca_exemption_amount'] = $this->language->get('error_sca_exemption_amount');
 		}
