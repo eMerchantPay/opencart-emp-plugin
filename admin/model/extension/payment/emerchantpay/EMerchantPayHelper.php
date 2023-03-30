@@ -220,7 +220,8 @@ class EMerchantPayHelper
 	 */
 	public static function getAvailableBankCodes() {
 		return [
-			\Genesis\API\Constants\Banks::CPI => 'Interac Combined Pay-in'
+			\Genesis\API\Constants\Banks::CPI => 'Interac Combined Pay-in',
+			\Genesis\API\Constants\Banks::BCT => 'Bancontact'
 		];
 	}
 

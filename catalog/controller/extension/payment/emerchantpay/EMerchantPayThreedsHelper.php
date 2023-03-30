@@ -285,6 +285,52 @@ class EMerchantPayThreedsHelper
 	}
 
 	/**
+	 * Get list of customer orders, filtered by payment code
+	 *
+	 * @param object $db_obj       database object
+	 * @param int    $customer_id  current customer's id
+	 * @param int    $store_id     Store id from config file
+	 * @param int    $language_id  Language id from config, to have translated order's status
+	 * @param string $payment_code We want to check for particular payment method
+	 *
+	 * @return array
+	 */
+	public static function getCustomerOrders($db_obj, $customer_id, $store_id, $language_id, $payment_code)
+	{
+		$raw_query = sprintf("
+            SELECT
+                o.order_id,
+                o.firstname,
+                o.lastname,
+                os.name as status,
+                o.date_added,
+                o.total,
+                o.currency_code,
+                o.currency_value
+            FROM
+                `%1\$sorder` o
+            LEFT JOIN
+                %1\$sorder_status os ON (o.order_status_id = os.order_status_id)
+            WHERE
+                o.customer_id = '%2\$d' AND
+                o.order_status_id > 0 AND
+                o.store_id = '%3\$d' AND
+                os.language_id = '%4\$d' AND
+                o.payment_code = '%5\$s'
+            ORDER BY
+                o.date_added ASC",
+			DB_PREFIX,
+			$customer_id,
+			$store_id,
+			$language_id,
+			$payment_code
+		);
+		$query = $db_obj->query($raw_query);
+
+		return $query->rows;
+	}
+
+	/**
 	 * Compare billing and shipping addresses
 	 *
 	 * @param array $order_info

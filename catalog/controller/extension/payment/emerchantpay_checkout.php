@@ -153,11 +153,13 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 			$model_account_order             = $this->model_account_order;
 			$model_account_customer          = $this->model_account_customer;
 
-			/**
-			 * Get all customer's orders
-			 * Default limit is 20, and they are sorted in descending order
-			 */
-			$customer_orders                 = array_reverse($model_account_order->getOrders(0, 99999));
+			$customer_orders                 = EMerchantPayThreedsHelper::getCustomerOrders(
+				$this->db,
+				$this->getCustomerId(),
+				(int)$this->config->get('config_store_id'),
+				(int)$this->config->get('config_language_id'),
+				$this->module_name
+			);
 
 			$is_guest                        = isset($this->session->data['guest']);
 			$has_physical_products           = EMerchantPayThreedsHelper::hasPhysicalProduct($product_info);
