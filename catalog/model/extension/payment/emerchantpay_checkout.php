@@ -596,7 +596,9 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 		$processed_list = array();
 		$alias_map      = array();
 
-		$selected_types = $this->config->get('emerchantpay_checkout_transaction_type');
+		$selected_types = $this->orderCardTransactionTypes(
+			$this->config->get('emerchantpay_checkout_transaction_type')
+		);
 		$methods        = \Genesis\API\Constants\Payment\Methods::getMethods();
 
 		foreach ($methods as $method) {
@@ -845,5 +847,22 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Order transaction types with Card Transaction types in front
+	 *
+	 * @param array $selected_types Selected transaction types
+	 * @return array
+	 */
+	private function orderCardTransactionTypes($selected_types)
+	{
+		$custom_order = \Genesis\API\Constants\Transaction\Types::getCardTransactionTypes();
+
+		asort($selected_types);
+
+		$sorted_array = array_intersect($custom_order, $selected_types);
+
+		return array_merge($sorted_array, array_diff($selected_types, $sorted_array));
 	}
 }
