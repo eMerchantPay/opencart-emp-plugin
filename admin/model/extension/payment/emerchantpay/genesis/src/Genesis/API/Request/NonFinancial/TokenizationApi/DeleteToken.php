@@ -23,43 +23,60 @@
  * @license     http://opensource.org/licenses/MIT The MIT License
  */
 
-namespace Genesis\API\Constants\NonFinancial;
+namespace Genesis\API\Request\NonFinancial\TokenizationApi;
 
-use Genesis\API\Constants\Transaction\Types;
+use Genesis\API\Request\Base\NonFinancial\TokenizationApi\BaseRequest;
+use Genesis\API\Traits\Request\NonFinancial\TokenizationApiAttributes;
+use Genesis\API\Traits\Request\NonFinancial\TokenizationApiTokenAttributes;
+use Genesis\Utils\Common as CommonUtils;
+use Genesis\API\Traits\RestrictedSetter;
 
 /**
- * Class Services
+ * Class DeleteToken
  *
- * Contains API Calls
+ * Deletes a token.
  *
- * @package Genesis\API\Constants\NonFinancial
+ * @package Genesis\API\Request\NonFinancial\TokenizationApi
  */
-class Services
+class DeleteToken extends BaseRequest
 {
+    use TokenizationApiAttributes, TokenizationApiTokenAttributes, RestrictedSetter;
 
     /**
-     * Address Verification
-     *
-     * @deprecated Payment method is deprecated and will be removed
+     * DeleteToken constructor
      */
-    const AVS             = 'avs';
+    public function __construct()
+    {
+        parent::__construct('delete_token');
+    }
 
     /**
-     * ABNiDeal API Call Request
-     */
-    const ABNI_DEAL_BANKS = 'abni_deal_bank';
-
-    /**
-     * Get Service API Deprecated Calls
-     *
      * @return array
      */
-    public static function getServiceDeprecatedRequests()
+    protected function getRequestStructure()
     {
         return [
-            self::AVS                   => 'NonFinancial\AVS',
-            self::ABNI_DEAL_BANKS       => 'NonFinancial\Retrieve\AbniDealBanks',
-            Types::ACCOUNT_VERIFICATION => 'NonFinancial\AccountVerification'
+            'consumer_id' => $this->consumer_id,
+            'email'       => $this->email,
+            'token'       => $this->token,
+            'token_type'  => $this->token_type
         ];
+    }
+
+    /**
+     * Set the required fields
+     *
+     * @return void
+     */
+    protected function setRequiredFields()
+    {
+        $requiredFields = [
+            'consumer_id',
+            'email',
+            'token',
+            'token_type'
+        ];
+
+        $this->requiredFields = CommonUtils::createArrayObject($requiredFields);
     }
 }

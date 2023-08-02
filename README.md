@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * OpenCart 3.0.X - 3.0.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
-* [GenesisPHP v1.21.7](https://github.com/GenesisGateway/genesis_php/tree/1.21.7) - (Integrated in Module)
+* [GenesisPHP v1.21.11](https://github.com/GenesisGateway/genesis_php/tree/1.21.11) - (Integrated in Module)
 
 GenesisPHP Requirements
 ------------

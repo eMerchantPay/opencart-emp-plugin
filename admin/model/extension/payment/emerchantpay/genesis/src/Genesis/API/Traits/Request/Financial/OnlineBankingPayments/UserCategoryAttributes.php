@@ -23,43 +23,20 @@
  * @license     http://opensource.org/licenses/MIT The MIT License
  */
 
-namespace Genesis\API\Constants\NonFinancial;
-
-use Genesis\API\Constants\Transaction\Types;
+namespace Genesis\API\Traits\Request\Financial\OnlineBankingPayments;
 
 /**
- * Class Services
+ * Trait UserCategoryAttributes
+ * @package Genesis\API\Traits\Request\Financial\OnlineBankingPayments
  *
- * Contains API Calls
- *
- * @package Genesis\API\Constants\NonFinancial
+ * @method $this getUserCategory() Get value
  */
-class Services
+trait UserCategoryAttributes
 {
-
     /**
-     * Address Verification
+     * User category. If missing, 'default' will be used
      *
-     * @deprecated Payment method is deprecated and will be removed
+     * @var $user_category
      */
-    const AVS             = 'avs';
-
-    /**
-     * ABNiDeal API Call Request
-     */
-    const ABNI_DEAL_BANKS = 'abni_deal_bank';
-
-    /**
-     * Get Service API Deprecated Calls
-     *
-     * @return array
-     */
-    public static function getServiceDeprecatedRequests()
-    {
-        return [
-            self::AVS                   => 'NonFinancial\AVS',
-            self::ABNI_DEAL_BANKS       => 'NonFinancial\Retrieve\AbniDealBanks',
-            Types::ACCOUNT_VERIFICATION => 'NonFinancial\AccountVerification'
-        ];
-    }
+    protected $user_category;
 }

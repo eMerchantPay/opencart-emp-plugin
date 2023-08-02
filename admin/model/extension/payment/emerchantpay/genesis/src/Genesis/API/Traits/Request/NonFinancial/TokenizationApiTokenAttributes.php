@@ -23,43 +23,39 @@
  * @license     http://opensource.org/licenses/MIT The MIT License
  */
 
-namespace Genesis\API\Constants\NonFinancial;
+namespace Genesis\API\Traits\Request\NonFinancial;
 
-use Genesis\API\Constants\Transaction\Types;
+use Genesis\Exceptions\InvalidArgument;
 
 /**
- * Class Services
+ * Trait TokenizationApiTokenAttributes
  *
- * Contains API Calls
+ * @package Genesis\API\Traits\Request\NonFinancial
  *
- * @package Genesis\API\Constants\NonFinancial
+ * @method string getToken() Get Token
  */
-class Services
+trait TokenizationApiTokenAttributes
 {
-
     /**
-     * Address Verification
+     * Plain-text token value
      *
-     * @deprecated Payment method is deprecated and will be removed
+     * @var string
      */
-    const AVS             = 'avs';
+    protected $token;
 
     /**
-     * ABNiDeal API Call Request
-     */
-    const ABNI_DEAL_BANKS = 'abni_deal_bank';
-
-    /**
-     * Get Service API Deprecated Calls
+     * @param string $value
      *
-     * @return array
+     * @return $this
+     * @throws InvalidArgument
      */
-    public static function getServiceDeprecatedRequests()
+    public function setToken($value)
     {
-        return [
-            self::AVS                   => 'NonFinancial\AVS',
-            self::ABNI_DEAL_BANKS       => 'NonFinancial\Retrieve\AbniDealBanks',
-            Types::ACCOUNT_VERIFICATION => 'NonFinancial\AccountVerification'
-        ];
+        return $this->setLimitedString(
+            'token',
+            $value,
+            36,
+            36
+        );
     }
 }

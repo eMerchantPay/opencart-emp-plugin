@@ -23,43 +23,73 @@
  * @license     http://opensource.org/licenses/MIT The MIT License
  */
 
-namespace Genesis\API\Constants\NonFinancial;
+namespace Genesis\API\Traits\Request\NonFinancial;
 
-use Genesis\API\Constants\Transaction\Types;
+use Genesis\Exceptions\InvalidArgument;
 
 /**
- * Class Services
+ * Trait TokenizationApiAttributes
  *
- * Contains API Calls
+ * @package Genesis\API\Traits\Request\NonFinancial
  *
- * @package Genesis\API\Constants\NonFinancial
+ * @method $this setTokenType($value) Set Token type format
+ * @method string getConsumerId() Get Consumer unique reference
+ * @method string getEmail() Get Consumer e-mail address
+ * @method string getTokenType() Get Token type format
  */
-class Services
+trait TokenizationApiAttributes
 {
-
     /**
-     * Address Verification
+     * Consumer unique reference
      *
-     * @deprecated Payment method is deprecated and will be removed
+     * @var string
      */
-    const AVS             = 'avs';
+    protected $consumer_id;
 
     /**
-     * ABNiDeal API Call Request
-     */
-    const ABNI_DEAL_BANKS = 'abni_deal_bank';
-
-    /**
-     * Get Service API Deprecated Calls
+     * Consumer e-mail address
      *
-     * @return array
+     * @var string
      */
-    public static function getServiceDeprecatedRequests()
+    protected $email;
+
+    /**
+     * Token type format
+     *
+     * @var string
+     */
+    protected $token_type;
+
+    /**
+     * @param string $value
+     *
+     * @return $this
+     * @throws InvalidArgument
+     */
+    public function setConsumerId($value)
     {
-        return [
-            self::AVS                   => 'NonFinancial\AVS',
-            self::ABNI_DEAL_BANKS       => 'NonFinancial\Retrieve\AbniDealBanks',
-            Types::ACCOUNT_VERIFICATION => 'NonFinancial\AccountVerification'
-        ];
+        return $this->setLimitedString(
+            'consumer_id',
+            $value,
+            1,
+            10
+        );
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return $this
+     * @throws InvalidArgument
+     */
+    public function setEmail($value)
+    {
+        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgument('Invalid email given');
+        }
+
+        $this->email = $value;
+
+        return $this;
     }
 }
