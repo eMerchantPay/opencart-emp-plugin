@@ -331,6 +331,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 					->setThreedsV2MerchantRiskDeliveryTimeframe($data['threeds_delivery_timeframe'])
 					->setThreedsV2MerchantRiskShippingIndicator($data['threeds_shipping_indicator'])
 					->setThreedsV2MerchantRiskReorderItemsIndicator($data['threeds_reorder_items_indicator'])
+					->setThreedsV2CardHolderAccountRegistrationDate($data['threeds_registration_date'])
 					->setThreedsV2CardHolderAccountRegistrationIndicator($data['threeds_registration_indicator'])
 				;
 				if (!$data['is_guest']) {

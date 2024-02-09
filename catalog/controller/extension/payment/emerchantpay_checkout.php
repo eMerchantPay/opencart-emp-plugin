@@ -257,6 +257,7 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 				'threeds_shipping_indicator'      => $threeds_shipping_indicator,
 				'threeds_reorder_items_indicator' => $threeds_reorder_items_indicator,
 				'threeds_registration_indicator'  => $threeds_registration_indicator,
+				'threeds_registration_date' 	  => $threeds_registration_date,
 				'sca_exemption_value'             => $this->config->get('emerchantpay_checkout_sca_exemption'),
 				'sca_exemption_amount'            => $this->config->get('emerchantpay_checkout_sca_exemption_amount'),
 			);
