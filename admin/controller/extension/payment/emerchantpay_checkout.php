@@ -25,6 +25,7 @@ if (!class_exists('ControllerExtensionPaymentEmerchantPayBase')) {
  * Backend controller for the "emerchantpay Checkout" module
  *
  * @package EMerchantPayCheckout
+ * @SuppressWarnings(PHPMD.LongClassName)
  */
 class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtensionPaymentEmerchantPayBase
 {

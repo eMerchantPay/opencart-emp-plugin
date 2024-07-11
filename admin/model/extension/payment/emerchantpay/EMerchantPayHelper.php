@@ -17,6 +17,9 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+use Genesis\Api\Request\Financial\Alternatives\Klarna\Item;
+use Genesis\Api\Request\Financial\Alternatives\Klarna\Items;
+
 if (!class_exists('\Genesis\Genesis', false)) {
 	if (strpos(DIR_APPLICATION, 'admin') === false) {
 		$path = DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
@@ -46,25 +49,25 @@ class EMerchantPayHelper
 	const PPRO_TRANSACTION_SUFFIX     = '_ppro';
 	const TRANSACTION_LANGUAGE_PREFIX = 'text_transaction_';
 
-	const GOOGLE_PAY_TRANSACTION_PREFIX     = \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY . '_';
+	const GOOGLE_PAY_TRANSACTION_PREFIX     = \Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY . '_';
 	const GOOGLE_PAY_PAYMENT_TYPE_AUTHORIZE =
-		\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE;
+		\Genesis\Api\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE;
 	const GOOGLE_PAY_PAYMENT_TYPE_SALE      =
-		\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE;
+		\Genesis\Api\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE;
 
-	const PAYPAL_TRANSACTION_PREFIX         = \Genesis\API\Constants\Transaction\Types::PAY_PAL . '_';
+	const PAYPAL_TRANSACTION_PREFIX         = \Genesis\Api\Constants\Transaction\Types::PAY_PAL . '_';
 	const PAYPAL_PAYMENT_TYPE_AUTHORIZE     =
-		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::AUTHORIZE;
+		\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::AUTHORIZE;
 	const PAYPAL_PAYMENT_TYPE_SALE          =
-		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::SALE;
+		\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::SALE;
 	const PAYPAL_PAYMENT_TYPE_EXPRESS       =
-		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::EXPRESS;
+		\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::EXPRESS;
 
-	const APPLE_PAY_TRANSACTION_PREFIX      = \Genesis\API\Constants\Transaction\Types::APPLE_PAY . '_';
+	const APPLE_PAY_TRANSACTION_PREFIX      = \Genesis\Api\Constants\Transaction\Types::APPLE_PAY . '_';
 	const APPLE_PAY_PAYMENT_TYPE_AUTHORIZE  =
-		\Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::AUTHORIZE;
+		\Genesis\Api\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::AUTHORIZE;
 	const APPLE_PAY_PAYMENT_TYPE_SALE       =
-		\Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::SALE;
+		\Genesis\Api\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::SALE;
 
 	const REFERENCE_ACTION_CAPTURE = 'capture';
 	const REFERENCE_ACTION_REFUND  = 'refund';
@@ -77,8 +80,8 @@ class EMerchantPayHelper
 	public static function getRecurringTransactionTypes()
 	{
 		return array(
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE,
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
+			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE,
+			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
 		);
 	}
 
@@ -91,9 +94,9 @@ class EMerchantPayHelper
 	{
 		$data = array();
 
-		foreach (\Genesis\API\Constants\Transaction\Types::getWPFTransactionTypes() as $type) {
+		foreach (\Genesis\Api\Constants\Transaction\Types::getWPFTransactionTypes() as $type) {
 			$key        = EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX . $type;
-			$data[$key] = \Genesis\API\Constants\Transaction\Names::getName($type);
+			$data[$key] = \Genesis\Api\Constants\Transaction\Names::getName($type);
 		}
 
 		return $data;
@@ -111,21 +114,21 @@ class EMerchantPayHelper
 	 *          )
 	 *      )
 	 *
-	 * @return \Genesis\API\Request\Financial\Alternatives\Klarna\Items
+	 * @return \Genesis\Api\Request\Financial\Alternatives\Klarna\Items
 	 * @throws \Genesis\Exceptions\ErrorParameter
 	 */
 	public static function getKlarnaCustomParamItems($order)
 	{
 		$tax_class_ids = self::getTaxClassIdFromProductInfo($order['additional']['product_info']);
 
-		$items = new \Genesis\API\Request\Financial\Alternatives\Klarna\Items($order['currency']);
+		$items = new Items($order['currency']);
 		foreach ($order['additional']['product_order_info'] as $product) {
-			$tax_class_id = \Genesis\API\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_PHYSICAL;
+			$tax_class_id = \Genesis\Api\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_PHYSICAL;
 			if ($tax_class_ids[$product['product_id']] == ModelPaymentEmerchantPayBase::OC_TAX_CLASS_VIRTUAL_PRODUCT) {
-				$tax_class_id = \Genesis\API\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_DIGITAL;
+				$tax_class_id = \Genesis\Api\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_DIGITAL;
 			}
 
-			$klarna_item = new \Genesis\API\Request\Financial\Alternatives\Klarna\Item(
+			$klarna_item = new Item(
 				$product['name'],
 				$tax_class_id,
 				$product['quantity'],
@@ -138,9 +141,9 @@ class EMerchantPayHelper
 		$taxes = floatval(self::getTaxFromOrderTotals($order['additional']['order_totals']));
 		if ($taxes) {
 			$items->addItem(
-				new \Genesis\API\Request\Financial\Alternatives\Klarna\Item(
+				new Item(
 					'Taxes',
-					\Genesis\API\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_SURCHARGE,
+					\Genesis\Api\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_SURCHARGE,
 					1,
 					$taxes
 				)
@@ -150,9 +153,9 @@ class EMerchantPayHelper
 		$shipping = floatval(self::getShippingFromOrderTotals($order['additional']['order_totals']));
 		if ($shipping) {
 			$items->addItem(
-				new \Genesis\API\Request\Financial\Alternatives\Klarna\Item(
+				new Item(
 					'Shipping Costs',
-					\Genesis\API\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_SHIPPING_FEE,
+					\Genesis\Api\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_SHIPPING_FEE,
 					1,
 					$shipping
 				)
@@ -220,9 +223,9 @@ class EMerchantPayHelper
 	 */
 	public static function getAvailableBankCodes() {
 		return [
-			\Genesis\API\Constants\Banks::CPI => 'Interac Combined Pay-in',
-			\Genesis\API\Constants\Banks::BCT => 'Bancontact',
-			\Genesis\API\Constants\Banks::BLK => 'Blik One Click'
+			\Genesis\Api\Constants\Banks::CPI => 'Interac Combined Pay-in',
+			\Genesis\Api\Constants\Banks::BCT => 'Bancontact',
+			\Genesis\Api\Constants\Banks::BLK => 'Blik One Click'
 		];
 	}
 

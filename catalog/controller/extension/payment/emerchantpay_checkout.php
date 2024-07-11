@@ -17,9 +17,10 @@
  * @license	 http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
-use Genesis\API\Constants\Transaction\Parameters\Threeds\V2\CardHolderAccount\RegistrationIndicators;
-use Genesis\API\Constants\Transaction\Parameters\Threeds\V2\MerchantRisk\DeliveryTimeframes;
-use Genesis\API\Constants\Transaction\Parameters\Threeds\V2\Purchase\Categories;
+use Genesis\Api\Constants\Transaction\Parameters\Threeds\V2\CardHolderAccount\RegistrationIndicators;
+use Genesis\Api\Constants\Transaction\Parameters\Threeds\V2\MerchantRisk\DeliveryTimeframes;
+use Genesis\Api\Constants\Transaction\Parameters\Threeds\V2\Purchase\Categories;
+use Genesis\Api\Notification;
 
 if (!class_exists('ControllerExtensionPaymentEmerchantPayBase')) {
 	require_once DIR_APPLICATION . "controller/extension/payment/emerchantpay/base_controller.php";
@@ -31,6 +32,8 @@ if (!class_exists('ControllerExtensionPaymentEmerchantPayBase')) {
  * @package EMerchantPayCheckout
  *
  * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.LongClassName)
  */
 class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtensionPaymentEmerchantPayBase
 {
@@ -125,6 +128,9 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 	 * @return void
 	 *
 	 * @SuppressWarnings(PHPMD.LongVariable)
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 */
 	public function send()
 	{
@@ -174,6 +180,7 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 				$customer_orders
 			);
 			$threeds_registration_indicator  = RegistrationIndicators::GUEST_CHECKOUT;
+			$threeds_registration_date       = null;
 
 			if (!$is_guest) {
 				$threeds_registration_date                = EMerchantPayThreedsHelper::findFirstCustomerOrderDate($customer_orders);
@@ -270,8 +277,13 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 				$data['purchases_count_last_6_months']            = $purchases_count_last_6_months;
 			}
 
-			$transaction = $this->model_extension_payment_emerchantpay_checkout->create($data);
+			$transaction_response = $this->model_extension_payment_emerchantpay_checkout->create($data);
 
+            if (!$transaction_response->isSuccessful()) {
+                throw new Exception($transaction_response->getErrorDescription());
+            }
+
+            $transaction = $transaction_response->getResponseObject();
 			if (isset($transaction->unique_id)) {
 				$timestamp = ($transaction->timestamp instanceof \DateTime) ? $transaction->timestamp->format('c') : $transaction->timestamp;
 
@@ -330,6 +342,9 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 	 * Process Gateway Notification
 	 *
 	 * @return void
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 */
 	public function callback()
 	{
@@ -341,9 +356,7 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 		try {
 			$this->model_extension_payment_emerchantpay_checkout->bootstrap();
 
-			$notification = new \Genesis\API\Notification(
-				$this->request->post
-			);
+			$notification = new Notification($this->request->post);
 
 			if ($notification->isAuthentic()) {
 				$notification->initReconciliation();
@@ -399,7 +412,7 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 					}
 
 					switch ($wpf_reconcile->status) {
-						case \Genesis\API\Constants\Transaction\States::APPROVED:
+						case \Genesis\Api\Constants\Transaction\States::APPROVED:
 							$this->model_checkout_order->addOrderHistory(
 								$transaction['order_id'],
 								$this->config->get('emerchantpay_checkout_order_status_id'),
@@ -407,8 +420,8 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 								true
 							);
 							break;
-						case \Genesis\API\Constants\Transaction\States::DECLINED:
-						case \Genesis\API\Constants\Transaction\States::ERROR:
+						case \Genesis\Api\Constants\Transaction\States::DECLINED:
+						case \Genesis\Api\Constants\Transaction\States::ERROR:
 							$this->model_checkout_order->addOrderHistory(
 								$transaction['order_id'],
 								$this->config->get('emerchantpay_checkout_order_failure_status_id'),

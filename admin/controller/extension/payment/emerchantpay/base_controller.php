@@ -17,8 +17,9 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
-use Genesis\API\Constants\Transaction\Parameters\ScaExemptions;
-use Genesis\API\Constants\Transaction\Parameters\Threeds\V2\Control\ChallengeIndicators;
+use Genesis\Api\Constants\Transaction\Parameters\ScaExemptions;
+use Genesis\Api\Constants\Transaction\Parameters\Threeds\V2\Control\ChallengeIndicators;
+use Genesis\Api\Constants\Transaction\States;
 
 if (!class_exists('\Genesis\Genesis', false)) {
 	include DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
@@ -32,6 +33,13 @@ if (!class_exists('EMerchantPayHelper')) {
  * Base Abstract Class for Method Admin Controllers
  *
  * Class ControllerExtensionPaymentEmerchantPayBase
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * @SuppressWarnings(PHPMD.LongClassName)
  */
 abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 {
@@ -294,6 +302,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 * Processes HTTP GET Index action
 	 *
 	 * @return void
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 */
 	protected function processGetIndexAction()
 	{
@@ -534,6 +543,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 * Get transactions list
 	 *
 	 * @return mixed
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 */
 	public function orderAction()
 	{
@@ -559,7 +569,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 				// Process individual fields
 				foreach ($transactions as &$transaction) {
 					/* OpenCart 2.2.x Fix (Cart\Currency does not check if the given currency code exists */
-					if (($has_currency_method && $this->currency->has($transaction['currency'])) || (!$has_currency_method && !@empty($transaction['currency'])))
+					if (($has_currency_method && $this->currency->has($transaction['currency'])) || (!$has_currency_method && !empty($transaction['currency'])))
 						$transaction['amount'] = $this->currency->format($transaction['amount'], $transaction['currency']);
 					else /* No Currency Code is stored on Void Transaction */
 						$transaction['amount'] = "";
@@ -579,10 +589,13 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 				// Ascending Date/Timestamp sorting
 				uasort($transactions, function ($element1, $element2) {
 					// sort by timestamp (date) first
-					if (@$element1["timestamp"] == @$element2["timestamp"]) {
-						return 0;
+					if (isset($element1['timestamp']) && isset($element2['timestamp'])) {
+						if ($element1['timestamp'] == $element2['timestamp']) {
+							return 0;
+						}
+						return ($element1["timestamp"] > $element2["timestamp"]) ? 1 : -1;
 					}
-					return (@$element1["timestamp"] > @$element2["timestamp"]) ? 1 : -1;
+					return -1;
 				});
 
 				// Create the parent/child relations from a flat array
@@ -672,13 +685,13 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 					$order_id,
 					$transaction['reference_id'],
 					array(
-						\Genesis\API\Constants\Transaction\Types::AUTHORIZE,
-						\Genesis\API\Constants\Transaction\Types::AUTHORIZE_3D,
-						\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY,
-						\Genesis\API\Constants\Transaction\Types::PAY_PAL,
-						\Genesis\API\Constants\Transaction\Types::APPLE_PAY,
+						\Genesis\Api\Constants\Transaction\Types::AUTHORIZE,
+						\Genesis\Api\Constants\Transaction\Types::AUTHORIZE_3D,
+						\Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY,
+						\Genesis\Api\Constants\Transaction\Types::PAY_PAL,
+						\Genesis\Api\Constants\Transaction\Types::APPLE_PAY,
 					),
-					\Genesis\API\Constants\Transaction\States::APPROVED
+					\Genesis\Api\Constants\Transaction\States::APPROVED
 				);
 				$total_captured_amount           = $this->getModelInstance()->getTransactionsSumAmount($order_id, $transaction['unique_id'], 'capture', 'approved');
 				$transaction['available_amount'] = $total_authorized_amount - $total_captured_amount;
@@ -829,6 +842,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 * Perform a Refund transaction
 	 *
 	 * @return void
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 */
 	public function refund()
 	{
@@ -1107,15 +1121,15 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			$this->error['warning'] = $this->language->get('error_permission');
 		}
 
-		if (@empty($this->request->post["{$this->module_name}_username"])) {
+		if (empty($this->request->post["{$this->module_name}_username"])) {
 			$this->error['username'] = $this->language->get('error_username');
 		}
 
-		if (@empty($this->request->post["{$this->module_name}_password"])) {
+		if (empty($this->request->post["{$this->module_name}_password"])) {
 			$this->error['password'] = $this->language->get('error_password');
 		}
 
-		if (@empty($this->request->post["{$this->module_name}_transaction_type"])) {
+		if (empty($this->request->post["{$this->module_name}_transaction_type"])) {
 			$this->error['transaction_type'] = $this->language->get('error_transaction_type');
 		}
 
@@ -1362,8 +1376,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	public function isInitialRecurringTransaction($transaction_type)
 	{
 		return in_array($transaction_type, array(
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE,
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
+			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE,
+			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
 		));
 	}
 
@@ -1424,7 +1438,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			);
 		}
 
-		return \Genesis\API\Constants\Transaction\Types::canCapture($transaction['type']);
+		return \Genesis\Api\Constants\Transaction\Types::canCapture($transaction['type']);
 	}
 
 	/**
@@ -1446,7 +1460,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			);
 		}
 
-		return \Genesis\API\Constants\Transaction\Types::canRefund($transaction['type']);
+		return \Genesis\Api\Constants\Transaction\Types::canRefund($transaction['type']);
 	}
 
 	/**
@@ -1457,7 +1471,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 */
 	public function canVoidTransaction($transaction)
 	{
-		return \Genesis\API\Constants\Transaction\Types::canVoid($transaction['type']) &&
+		return \Genesis\Api\Constants\Transaction\Types::canVoid($transaction['type']) &&
 			$this->hasApprovedState($transaction['status']);
 	}
 
@@ -1473,8 +1487,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 		return $this->getModelInstance()->getTransactionsByTypeAndStatus(
 			$order_id,
 			$transaction['unique_id'],
-			\Genesis\API\Constants\Transaction\Types::VOID,
-			\Genesis\API\Constants\Transaction\States::APPROVED
+			\Genesis\Api\Constants\Transaction\Types::VOID,
+			\Genesis\Api\Constants\Transaction\States::APPROVED
 		) !== false;
 	}
 
@@ -1798,9 +1812,9 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	protected function isTransactionWithCustomAttribute($transaction_type)
 	{
 		$transaction_types = [
-			\Genesis\API\Constants\Transaction\Types::GOOGLE_PAY,
-			\Genesis\API\Constants\Transaction\Types::PAY_PAL,
-			\Genesis\API\Constants\Transaction\Types::APPLE_PAY,
+			\Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY,
+			\Genesis\Api\Constants\Transaction\Types::PAY_PAL,
+			\Genesis\Api\Constants\Transaction\Types::APPLE_PAY,
 		];
 
 		return in_array($transaction_type, $transaction_types);
@@ -1822,7 +1836,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 		}
 
 		switch ($transaction_type) {
-			case \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY:
+			case \Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY:
 				if (EMerchantPayHelper::REFERENCE_ACTION_CAPTURE === $action) {
 					return in_array(
 						EMerchantPayHelper::GOOGLE_PAY_TRANSACTION_PREFIX .
@@ -1839,7 +1853,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 					);
 				}
 				break;
-			case \Genesis\API\Constants\Transaction\Types::PAY_PAL:
+			case \Genesis\Api\Constants\Transaction\Types::PAY_PAL:
 				if (EMerchantPayHelper::REFERENCE_ACTION_CAPTURE === $action) {
 					return in_array(
 						EMerchantPayHelper::PAYPAL_TRANSACTION_PREFIX .
@@ -1859,7 +1873,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 					return (count(array_intersect($refundable_types, $selected_types)) > 0);
 				}
 				break;
-			case \Genesis\API\Constants\Transaction\Types::APPLE_PAY:
+			case \Genesis\Api\Constants\Transaction\Types::APPLE_PAY:
 				if (EMerchantPayHelper::REFERENCE_ACTION_CAPTURE === $action) {
 					return in_array(
 						EMerchantPayHelper::APPLE_PAY_TRANSACTION_PREFIX .
@@ -1895,7 +1909,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			return false;
 		}
 
-		$state = new \Genesis\API\Constants\Transaction\States($transaction_type);
+		$state = new States($transaction_type);
 
 		return $state->isApproved();
 	}

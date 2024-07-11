@@ -17,6 +17,8 @@
  * @license	 http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
+use Genesis\Genesis;
+
 if (!class_exists('\Genesis\Genesis', false)) {
 	include DIR_APPLICATION . '/../admin/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 }
@@ -32,30 +34,31 @@ if (!class_exists('EmerchantPayThreedsHelper', false)) {
  * Base Abstract Model for Method Models
  *
  * Class ModelExtensionPaymentEmerchantPayBase
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 {
 	const PPRO_TRANSACTION_SUFFIX     = '_ppro';
 
-	const GOOGLE_PAY_TRANSACTION_PREFIX     = \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY . '_';
+	const GOOGLE_PAY_TRANSACTION_PREFIX     = \Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY . '_';
 	const GOOGLE_PAY_PAYMENT_TYPE_AUTHORIZE =
-		\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE;
+		\Genesis\Api\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE;
 	const GOOGLE_PAY_PAYMENT_TYPE_SALE      =
-		\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE;
+		\Genesis\Api\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE;
 
-	const PAYPAL_TRANSACTION_PREFIX         = \Genesis\API\Constants\Transaction\Types::PAY_PAL . '_';
+	const PAYPAL_TRANSACTION_PREFIX         = \Genesis\Api\Constants\Transaction\Types::PAY_PAL . '_';
 	const PAYPAL_PAYMENT_TYPE_AUTHORIZE     =
-		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::AUTHORIZE;
+		\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::AUTHORIZE;
 	const PAYPAL_PAYMENT_TYPE_SALE          =
-		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::SALE;
+		\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::SALE;
 	const PAYPAL_PAYMENT_TYPE_EXPRESS       =
-		\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::EXPRESS;
+		\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::EXPRESS;
 
-	const APPLE_PAY_TRANSACTION_PREFIX      = \Genesis\API\Constants\Transaction\Types::APPLE_PAY . '_';
+	const APPLE_PAY_TRANSACTION_PREFIX      = \Genesis\Api\Constants\Transaction\Types::APPLE_PAY . '_';
 	const APPLE_PAY_PAYMENT_TYPE_AUTHORIZE  =
-		\Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::AUTHORIZE;
+		\Genesis\Api\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::AUTHORIZE;
 	const APPLE_PAY_PAYMENT_TYPE_SALE       =
-		\Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::SALE;
+		\Genesis\Api\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::SALE;
 
 	/**
 	 * Max. number of records of the cron log
@@ -292,16 +295,16 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 	public function updateOrderRecurring($data, $payment_reference = null)
 	{
 		switch ($data['status']) {
-			case \Genesis\API\Constants\Transaction\States::APPROVED:
+			case \Genesis\Api\Constants\Transaction\States::APPROVED:
 				$recurring_status = self::OC_ORD_REC_STATUS_ACTIVE;
 				break;
-			case \Genesis\API\Constants\Transaction\States::DECLINED:
-			case \Genesis\API\Constants\Transaction\States::ERROR:
+			case \Genesis\Api\Constants\Transaction\States::DECLINED:
+			case \Genesis\Api\Constants\Transaction\States::ERROR:
 				$recurring_status = self::OC_ORD_REC_STATUS_CANCELLED;
 				break;
-			case \Genesis\API\Constants\Transaction\States::NEW_STATUS:
-			case \Genesis\API\Constants\Transaction\States::PENDING_ASYNC:
-			case \Genesis\API\Constants\Transaction\States::IN_PROGRESS:
+			case \Genesis\Api\Constants\Transaction\States::NEW_STATUS:
+			case \Genesis\Api\Constants\Transaction\States::PENDING_ASYNC:
+			case \Genesis\Api\Constants\Transaction\States::IN_PROGRESS:
 				$recurring_status = self::OC_ORD_REC_STATUS_PENDING;
 				break;
 			default:
@@ -352,16 +355,16 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 		$ord_rec_transaction_id = null;
 
 		switch ($data['status']) {
-			case \Genesis\API\Constants\Transaction\States::APPROVED:
+			case \Genesis\Api\Constants\Transaction\States::APPROVED:
 				$oc_txn_type = self::OC_REC_TXN_PAYMENT;
 				break;
-			case \Genesis\API\Constants\Transaction\States::DECLINED:
-			case \Genesis\API\Constants\Transaction\States::ERROR:
+			case \Genesis\Api\Constants\Transaction\States::DECLINED:
+			case \Genesis\Api\Constants\Transaction\States::ERROR:
 				$oc_txn_type = self::OC_REC_TXN_FAILED;
 				break;
-			case \Genesis\API\Constants\Transaction\States::NEW_STATUS:
-			case \Genesis\API\Constants\Transaction\States::PENDING_ASYNC:
-			case \Genesis\API\Constants\Transaction\States::IN_PROGRESS:
+			case \Genesis\Api\Constants\Transaction\States::NEW_STATUS:
+			case \Genesis\Api\Constants\Transaction\States::PENDING_ASYNC:
+			case \Genesis\Api\Constants\Transaction\States::IN_PROGRESS:
 				$oc_txn_type = self::OC_REC_TXN_DATE_ADDED;
 				break;
 			default:
@@ -608,7 +611,7 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 
 				$data = array(
 					'terminal_token'   => $this->getTerminalToken($transaction),
-					'transaction type' => \Genesis\API\Constants\Transaction\Types::RECURRING_SALE,
+					'transaction type' => \Genesis\Api\Constants\Transaction\Types::RECURRING_SALE,
 					'transaction_id'   => $this->genTransactionId(),
 					'usage'            => $this->getUsage(),
 					'remote_address'   => $this->request->server['REMOTE_ADDR'],
@@ -617,8 +620,13 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 					'currency'         => $rec_data['currency_code']
 				);
 
-				$response = $this->sendRecurringSale($data);
+				$response_obj = $this->sendRecurringSale($data);
 
+                if (!$response_obj->isSuccessful()) {
+                    throw new Exception($response_obj->getErrorDescription());
+                }
+
+                $response = $response_obj->getResponseObject();
 				if ($response != false) {
 					$timestamp = ($response->timestamp instanceof \DateTime) ? $response->timestamp->format('c') : $response->timestamp;
 
@@ -750,9 +758,7 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 
 			$genesis->execute();
 
-			return $genesis->response()->getResponseObject();
-		} catch (\Genesis\Exceptions\ErrorAPI $api) {
-			throw $api;
+			return $genesis->response();
 		} catch (\Exception $exception) {
 			$this->logEx($exception);
 
@@ -772,8 +778,8 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 	 */
 	public function createGenesisRequest($transaction_type)
 	{
-		return new \Genesis\Genesis(
-			\Genesis\API\Constants\Transaction\Types::getFinancialRequestClassForTrxType($transaction_type)
+		return new Genesis(
+			\Genesis\Api\Constants\Transaction\Types::getFinancialRequestClassForTrxType($transaction_type)
 		);
 	}
 
@@ -786,8 +792,8 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 	public function isInitialRecurringTransaction($transaction_type)
 	{
 		return in_array($transaction_type, array(
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE,
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
+			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE,
+			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
 		));
 	}
 

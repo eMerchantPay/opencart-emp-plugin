@@ -15,6 +15,12 @@
         <exclude name="StaticAccess" />
         <exclude name="BooleanArgumentFlag" />
         <exclude name="ElseExpression" />
+        <exclude name="MissingImport" />
+    </rule>
+    <rule ref="rulesets/cleancode.xml/MissingImport">
+        <properties>
+            <property name="ignore-global" value="true"/>
+        </properties>
     </rule>
     <!--End of CleanCode RuleSets-->
 

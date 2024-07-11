@@ -17,8 +17,9 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
-use Genesis\API\Constants\Transaction\Parameters\Threeds\V2\Control\ChallengeIndicators;
-use Genesis\API\Constants\Transaction\Parameters\ScaExemptions;
+use Genesis\Api\Constants\Transaction\Parameters\Threeds\V2\Control\ChallengeIndicators;
+use Genesis\Api\Constants\Transaction\Parameters\ScaExemptions;
+use Genesis\Genesis;
 
 if (!class_exists('EMerchantPayHelper')) {
 	require_once DIR_APPLICATION . "model/extension/payment/emerchantpay/EMerchantPayHelper.php";
@@ -28,6 +29,9 @@ if (!class_exists('EMerchantPayHelper')) {
  * Backend model for the "emerchantpay Checkout" module
  *
  * @package EMerchantPayCheckout
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.LongClassName)
  */
 class ModelExtensionPaymentEmerchantPayCheckout extends Model
 {
@@ -37,7 +41,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.6.7';
+	protected $module_version = '1.6.8';
 
 	/**
 	 * Perform installation logic
@@ -309,8 +313,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		try {
 			$this->bootstrap($token);
 
-			$genesis = new \Genesis\Genesis(
-				\Genesis\API\Constants\Transaction\Types::getCaptureTransactionClass($type)
+			$genesis = new Genesis(
+				\Genesis\Api\Constants\Transaction\Types::getCaptureTransactionClass($type)
 			);
 
 			$genesis
@@ -326,7 +330,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 				->setAmount($amount)
 				->setCurrency($currency);
 
-			if ($type === \Genesis\API\Constants\Transaction\Types::KLARNA_AUTHORIZE) {
+			if ($type === \Genesis\Api\Constants\Transaction\Types::KLARNA_AUTHORIZE) {
 				$genesis->request()->setItems($this->getKlarnaReferenceAttributes($currency, $order_id));
 			}
 
@@ -358,8 +362,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		try {
 			$this->bootstrap($token);
 
-			$genesis = new \Genesis\Genesis(
-				\Genesis\API\Constants\Transaction\Types::getRefundTransactionClass($type)
+			$genesis = new Genesis(
+				\Genesis\Api\Constants\Transaction\Types::getRefundTransactionClass($type)
 			);
 
 			$genesis
@@ -375,7 +379,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 				->setAmount($amount)
 				->setCurrency($currency);
 
-			if ($type === \Genesis\API\Constants\Transaction\Types::KLARNA_CAPTURE) {
+			if ($type === \Genesis\Api\Constants\Transaction\Types::KLARNA_CAPTURE) {
 				$genesis->request()->setItems($this->getKlarnaReferenceAttributes($currency, $order_id));
 			}
 
@@ -392,7 +396,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	/**
 	 * @param $currency
 	 * @param $order_id
-	 * @return \Genesis\API\Request\Financial\Alternatives\Klarna\Items
+	 * @return \Genesis\Api\Request\Financial\Alternatives\Klarna\Items
 	 * @throws \Genesis\Exceptions\ErrorParameter
 	 */
 	protected function getKlarnaReferenceAttributes($currency, $order_id)
@@ -436,7 +440,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		try {
 			$this->bootstrap($token);
 
-			$genesis = new \Genesis\Genesis('Financial\Void');
+			$genesis = new Genesis('Financial\Void');
 
 			$genesis
 				->request()
@@ -472,23 +476,23 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 
 		$this->load->language('extension/payment/emerchantpay_checkout');
 
-		$transaction_types = \Genesis\API\Constants\Transaction\Types::getWPFTransactionTypes();
+		$transaction_types = \Genesis\Api\Constants\Transaction\Types::getWPFTransactionTypes();
 		$excluded_types    = EMerchantPayHelper::getRecurringTransactionTypes();
 
 		// Exclude SDD Recurring
-		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::SDD_INIT_RECURRING_SALE);
+		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::SDD_INIT_RECURRING_SALE);
 
 		// Exclude PPRO transaction. This is not standalone transaction type
-		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::PPRO);
+		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::PPRO);
 
 		// Exclude GooglePay transaction. In this way Google Pay Payment types will be introduced
-		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::GOOGLE_PAY);
+		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY);
 
 		// Exclude PayPal transaction. In this way PayPal Payment types will be introduced
-		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::PAY_PAL);
+		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::PAY_PAL);
 
 		// Exclude Apple Pay transaction. This is not standalone transaction type
-		array_push($excluded_types, \Genesis\API\Constants\Transaction\Types::APPLE_PAY);
+		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::APPLE_PAY);
 
 		// Exclude Transaction Types
 		$transaction_types = array_diff($transaction_types, $excluded_types);
@@ -498,7 +502,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			function ($type) {
 				return $type . EMerchantPayHelper::PPRO_TRANSACTION_SUFFIX;
 			},
-			\Genesis\API\Constants\Payment\Methods::getMethods()
+			\Genesis\Api\Constants\Payment\Methods::getMethods()
 		);
 
 		// Add Google Payment types
@@ -507,8 +511,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 				return EMerchantPayHelper::GOOGLE_PAY_TRANSACTION_PREFIX . $type;
 			},
 			[
-				\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE,
-				\Genesis\API\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE
+				\Genesis\Api\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE,
+				\Genesis\Api\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::SALE
 			]
 		);
 
@@ -518,9 +522,9 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 				return EMerchantPayHelper::PAYPAL_TRANSACTION_PREFIX . $type;
 			},
 			[
-				\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::AUTHORIZE,
-				\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::SALE,
-				\Genesis\API\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::EXPRESS
+				\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::AUTHORIZE,
+				\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::SALE,
+				\Genesis\Api\Constants\Transaction\Parameters\Wallets\PayPal\PaymentTypes::EXPRESS
 			]
 		);
 
@@ -530,8 +534,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 				return EMerchantPayHelper::APPLE_PAY_TRANSACTION_PREFIX . $type;
 			},
 			[
-				\Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::AUTHORIZE,
-				\Genesis\API\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::SALE
+				\Genesis\Api\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::AUTHORIZE,
+				\Genesis\Api\Constants\Transaction\Parameters\Mobile\ApplePay\PaymentTypes::SALE
 			]
 		);
 
@@ -548,8 +552,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			$name = $this->language->get('text_transaction_' . $type);
 
 			if (strpos($name, 'text_transaction') !== false) {
-				if (\Genesis\API\Constants\Transaction\Types::isValidTransactionType($type)) {
-					$name = \Genesis\API\Constants\Transaction\Names::getName($type);
+				if (\Genesis\Api\Constants\Transaction\Types::isValidTransactionType($type)) {
+					$name = \Genesis\Api\Constants\Transaction\Names::getName($type);
 				} else {
 					$name = strtoupper($type);
 				}
@@ -645,18 +649,18 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		$this->load->language('extension/payment/emerchantpay_checkout');
 
 		return array(
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE    => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE,
+			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE    => array(
+				'id'   => \Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE,
 				'name' => $this->language->get(
 					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
-					\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE
+					\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE
 				)
 			),
-			\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D => array(
-				'id'   => \Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D,
+			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D => array(
+				'id'   => \Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D,
 				'name' => $this->language->get(
 					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
-					\Genesis\API\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
+					\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
 				)
 			),
 		);
@@ -690,7 +694,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			include DIR_APPLICATION . '/model/extension/payment/emerchantpay/genesis/vendor/autoload.php';
 
 			\Genesis\Config::setEndpoint(
-				\Genesis\API\Constants\Endpoints::EMERCHANTPAY
+				\Genesis\Api\Constants\Endpoints::EMERCHANTPAY
 			);
 
 			\Genesis\Config::setUsername(
@@ -702,7 +706,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			);
 
 			\Genesis\Config::setEnvironment(
-				$this->config->get('emerchantpay_checkout_sandbox') ? \Genesis\API\Constants\Environments::STAGING : \Genesis\API\Constants\Environments::PRODUCTION
+				$this->config->get('emerchantpay_checkout_sandbox') ? \Genesis\Api\Constants\Environments::STAGING : \Genesis\Api\Constants\Environments::PRODUCTION
 			);
 		}
 
@@ -730,6 +734,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 * @param $seen - array passed to recursive calls to accumulate trace lines already seen
 	 *                     leave as NULL when calling this function
 	 * @return array of strings, one entry per trace line
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
 	private function jTraceEx($exception, $seen = null)
 	{

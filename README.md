@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * OpenCart 3.0.X - 3.0.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
-* [GenesisPHP v1.24.2](https://github.com/GenesisGateway/genesis_php/tree/1.24.2) - (Integrated in Module)
+* [GenesisPHP v2.0.1](https://github.com/GenesisGateway/genesis_php/tree/2.0.1) - (Integrated in Module)
 
 GenesisPHP Requirements
 ------------
@@ -79,12 +79,10 @@ Supported Transactions & Payment Methods
   * __eps__
   * __eZeeWallet__
   * __Fashioncheque__
-  * __GiroPay__
   * __Google Pay__
   * __iDeal__
   * __iDebit__
   * __InstaDebit__
-  * __InstantTransfer__
   * __InitRecurringSale__
   * __InitRecurringSale (3D-Secure)__
   * __Intersolve__
@@ -111,7 +109,6 @@ Supported Transactions & Payment Methods
   * __Post Finance__
   * __PPRO__
     * __eps__
-    * __GiroPay__
     * __Ideal__
     * __Przelewy24__
     * __SafetyPay__
