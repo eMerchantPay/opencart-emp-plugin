@@ -41,7 +41,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.6.8';
+	protected $module_version = '1.6.9';
 
 	/**
 	 * Perform installation logic
@@ -497,14 +497,6 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		// Exclude Transaction Types
 		$transaction_types = array_diff($transaction_types, $excluded_types);
 
-		// Add PPRO types
-		$ppro_types = array_map(
-			function ($type) {
-				return $type . EMerchantPayHelper::PPRO_TRANSACTION_SUFFIX;
-			},
-			\Genesis\Api\Constants\Payment\Methods::getMethods()
-		);
-
 		// Add Google Payment types
 		$google_pay_types = array_map(
 			function ($type) {
@@ -541,7 +533,6 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 
 		$transaction_types = array_merge(
 			$transaction_types,
-			$ppro_types,
 			$google_pay_types,
 			$paypal_types,
 			$apple_pay_types

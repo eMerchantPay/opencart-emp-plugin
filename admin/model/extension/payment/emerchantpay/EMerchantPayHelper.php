@@ -46,7 +46,6 @@ if (!class_exists('ModelExtensionPaymentEmerchantPayBase', false)) {
  */
 class EMerchantPayHelper
 {
-	const PPRO_TRANSACTION_SUFFIX     = '_ppro';
 	const TRANSACTION_LANGUAGE_PREFIX = 'text_transaction_';
 
 	const GOOGLE_PAY_TRANSACTION_PREFIX     = \Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY . '_';
@@ -225,7 +224,9 @@ class EMerchantPayHelper
 		return [
 			\Genesis\Api\Constants\Banks::CPI => 'Interac Combined Pay-in',
 			\Genesis\Api\Constants\Banks::BCT => 'Bancontact',
-			\Genesis\Api\Constants\Banks::BLK => 'Blik One Click'
+			\Genesis\Api\Constants\Banks::BLK => 'BLIK',
+			\Genesis\Api\Constants\Banks::SE  => 'SPEI',
+			\Genesis\Api\Constants\Banks::PID => 'LatiPay'
 		];
 	}
 

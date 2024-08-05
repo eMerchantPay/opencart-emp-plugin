@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * OpenCart 3.0.X - 3.0.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
-* [GenesisPHP v2.0.1](https://github.com/GenesisGateway/genesis_php/tree/2.0.1) - (Integrated in Module)
+* [GenesisPHP v2.0.2](https://github.com/GenesisGateway/genesis_php/tree/2.0.2) - (Integrated in Module)
 
 GenesisPHP Requirements
 ------------
@@ -97,7 +97,9 @@ Supported Transactions & Payment Methods
   * __Online Banking__
     * __Interac Combined Pay-in (CPI)__ 
     * __Bancontact__ 
-    * __Blik One Click (BLK)__
+    * __BLIK__
+    * __SPEI__
+    * __LatiPay__
   * __OXXO__
   * __P24__
   * __Pago Facil__
@@ -107,14 +109,6 @@ Supported Transactions & Payment Methods
   * __Pix__
   * __POLi__
   * __Post Finance__
-  * __PPRO__
-    * __eps__
-    * __Ideal__
-    * __Przelewy24__
-    * __SafetyPay__
-    * __TrustPay__
-    * __BCMC__
-    * __MyBank__
   * __PSE__
   * __RapiPago__
   * __Redpagos__

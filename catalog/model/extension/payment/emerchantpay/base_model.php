@@ -38,8 +38,6 @@ if (!class_exists('EmerchantPayThreedsHelper', false)) {
  */
 abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 {
-	const PPRO_TRANSACTION_SUFFIX     = '_ppro';
-
 	const GOOGLE_PAY_TRANSACTION_PREFIX     = \Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY . '_';
 	const GOOGLE_PAY_PAYMENT_TYPE_AUTHORIZE =
 		\Genesis\Api\Constants\Transaction\Parameters\Mobile\GooglePay\PaymentTypes::AUTHORIZE;
