@@ -19,6 +19,7 @@
 
 require_once DIR_APPLICATION . 'model/extension/payment/emerchantpay/base_model.php';
 
+use Genesis\Api\Constants\Transaction\Types;
 use Genesis\Genesis;
 use Genesis\Api\Constants\Transaction\States;
 
@@ -287,7 +288,9 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 	 * Send transaction to Genesis
 	 *
 	 * @param $data array Transaction Data
-	 * @return mixed
+	 *
+	 * @return \Genesis\Api\Response
+	 *
 	 * @throws Exception
 	 */
 	public function create($data)
@@ -375,7 +378,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 		} catch (\Exception $exception) {
 			$this->logEx($exception);
 
-			return false;
+			throw $exception;
 		}
 	}
 
@@ -613,19 +616,19 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 
 		$alias_map = [
 			self::GOOGLE_PAY_TRANSACTION_PREFIX . self::GOOGLE_PAY_PAYMENT_TYPE_AUTHORIZE =>
-				\Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY,
+				Types::GOOGLE_PAY,
 			self::GOOGLE_PAY_TRANSACTION_PREFIX . self::GOOGLE_PAY_PAYMENT_TYPE_SALE      =>
-				\Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY,
+				Types::GOOGLE_PAY,
 			self::PAYPAL_TRANSACTION_PREFIX . self::PAYPAL_PAYMENT_TYPE_AUTHORIZE         =>
-				\Genesis\Api\Constants\Transaction\Types::PAY_PAL,
+				Types::PAY_PAL,
 			self::PAYPAL_TRANSACTION_PREFIX . self::PAYPAL_PAYMENT_TYPE_SALE              =>
-				\Genesis\Api\Constants\Transaction\Types::PAY_PAL,
+				Types::PAY_PAL,
 			self::PAYPAL_TRANSACTION_PREFIX . self::PAYPAL_PAYMENT_TYPE_EXPRESS           =>
-				\Genesis\Api\Constants\Transaction\Types::PAY_PAL,
+				Types::PAY_PAL,
 			self::APPLE_PAY_TRANSACTION_PREFIX . self::APPLE_PAY_PAYMENT_TYPE_AUTHORIZE   =>
-				\Genesis\Api\Constants\Transaction\Types::APPLE_PAY,
+				Types::APPLE_PAY,
 			self::APPLE_PAY_TRANSACTION_PREFIX . self::APPLE_PAY_PAYMENT_TYPE_SALE        =>
-				\Genesis\Api\Constants\Transaction\Types::APPLE_PAY,
+				Types::APPLE_PAY,
 		];
 
 		foreach ($selected_types as $selected_type) {
@@ -701,23 +704,23 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 	{
 		$parameters = array();
 		switch ($type) {
-			case \Genesis\Api\Constants\Transaction\Types::IDEBIT_PAYIN:
-			case \Genesis\Api\Constants\Transaction\Types::INSTA_DEBIT_PAYIN:
+			case Types::IDEBIT_PAYIN:
+			case Types::INSTA_DEBIT_PAYIN:
 				$parameters = array(
 					'customer_account_id' => $order['additional']['user_hash']
 				);
 				break;
-			case \Genesis\Api\Constants\Transaction\Types::KLARNA_AUTHORIZE:
-				$parameters = EMerchantPayHelper::getKlarnaCustomParamItems($order)->toArray();
+			case Types::INVOICE:
+				$parameters = EMerchantPayHelper::getInvoiceCustomParamItems($order)->toArray();
 				break;
-			case \Genesis\Api\Constants\Transaction\Types::TRUSTLY_SALE:
+			case Types::TRUSTLY_SALE:
 				$current_user_id = $order['additional']['user_id'];
 				$user_id         = ($current_user_id > 0) ? $current_user_id : $order['additional']['user_hash'];
 				$parameters = array(
 					'user_id' => $user_id
 				);
 				break;
-			case \Genesis\Api\Constants\Transaction\Types::ONLINE_BANKING_PAYIN:
+			case Types::ONLINE_BANKING_PAYIN:
 				$selected_bank_codes = $this->config->get('emerchantpay_checkout_bank_codes');
 
 				if (\Genesis\Utils\Common::isValidArray($selected_bank_codes)) {
@@ -729,7 +732,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 					);
 				}
 				break;
-			case \Genesis\Api\Constants\Transaction\Types::PAYSAFECARD:
+			case Types::PAYSAFECARD:
 				$current_user_id = $order['additional']['user_id'];
 				$customer_id     = ($current_user_id > 0) ? $current_user_id : $order['additional']['user_hash'];
 				$parameters      = array(
@@ -845,11 +848,11 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 	private function getCustomParameterKey($transaction_type)
 	{
 		switch ($transaction_type) {
-			case \Genesis\Api\Constants\Transaction\Types::PAY_PAL:
+			case Types::PAY_PAL:
 				$result = 'payment_type';
 				break;
-			case \Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY:
-			case \Genesis\Api\Constants\Transaction\Types::APPLE_PAY:
+			case Types::GOOGLE_PAY:
+			case Types::APPLE_PAY:
 				$result = 'payment_subtype';
 				break;
 			default:
@@ -867,7 +870,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends ModelExtensionPaymentEme
 	 */
 	private function orderCardTransactionTypes($selected_types)
 	{
-		$custom_order = \Genesis\Api\Constants\Transaction\Types::getCardTransactionTypes();
+		$custom_order = Types::getCardTransactionTypes();
 
 		asort($selected_types);
 

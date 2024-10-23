@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * OpenCart 3.0.X - 3.0.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
-* [GenesisPHP v2.0.2](https://github.com/GenesisGateway/genesis_php/tree/2.0.2) - (Integrated in Module)
+* [GenesisPHP v2.0.3](https://github.com/GenesisGateway/genesis_php/tree/2.0.3) - (Integrated in Module)
 
 GenesisPHP Requirements
 ------------
@@ -87,7 +87,6 @@ Supported Transactions & Payment Methods
   * __InitRecurringSale (3D-Secure)__
   * __Intersolve__
   * __Itau__
-  * __Klarna__
   * __Multibanco__
   * __MyBank__
   * __Naranja__

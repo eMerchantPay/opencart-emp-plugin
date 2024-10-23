@@ -19,6 +19,7 @@
 
 use Genesis\Api\Constants\Transaction\Parameters\Threeds\V2\Control\ChallengeIndicators;
 use Genesis\Api\Constants\Transaction\Parameters\ScaExemptions;
+use Genesis\Api\Constants\Transaction\Types;
 use Genesis\Genesis;
 
 if (!class_exists('EMerchantPayHelper')) {
@@ -41,7 +42,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	 *
 	 * @var string
 	 */
-	protected $module_version = '1.6.9';
+	protected $module_version = '1.7.0';
 
 	/**
 	 * Perform installation logic
@@ -314,7 +315,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			$this->bootstrap($token);
 
 			$genesis = new Genesis(
-				\Genesis\Api\Constants\Transaction\Types::getCaptureTransactionClass($type)
+				Types::getCaptureTransactionClass($type)
 			);
 
 			$genesis
@@ -330,8 +331,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 				->setAmount($amount)
 				->setCurrency($currency);
 
-			if ($type === \Genesis\Api\Constants\Transaction\Types::KLARNA_AUTHORIZE) {
-				$genesis->request()->setItems($this->getKlarnaReferenceAttributes($currency, $order_id));
+			if ($type === Types::INVOICE) {
+				$genesis->request()->setItems($this->getInvoiceReferenceAttributes($currency, $order_id));
 			}
 
 			$genesis->execute();
@@ -363,7 +364,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			$this->bootstrap($token);
 
 			$genesis = new Genesis(
-				\Genesis\Api\Constants\Transaction\Types::getRefundTransactionClass($type)
+				Types::getRefundTransactionClass($type)
 			);
 
 			$genesis
@@ -379,8 +380,8 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 				->setAmount($amount)
 				->setCurrency($currency);
 
-			if ($type === \Genesis\Api\Constants\Transaction\Types::KLARNA_CAPTURE) {
-				$genesis->request()->setItems($this->getKlarnaReferenceAttributes($currency, $order_id));
+			if ($type === Types::INVOICE_CAPTURE) {
+				$genesis->request()->setItems($this->getInvoiceReferenceAttributes($currency, $order_id));
 			}
 
 			$genesis->execute();
@@ -396,10 +397,10 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 	/**
 	 * @param $currency
 	 * @param $order_id
-	 * @return \Genesis\Api\Request\Financial\Alternatives\Klarna\Items
+	 * @return \Genesis\Api\Request\Financial\Alternatives\Transaction\Items
 	 * @throws \Genesis\Exceptions\ErrorParameter
 	 */
-	protected function getKlarnaReferenceAttributes($currency, $order_id)
+	protected function getInvoiceReferenceAttributes($currency, $order_id)
 	{
 		$this->load->model('sale/order');
 
@@ -414,7 +415,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			)
 		);
 
-		return EMerchantPayHelper::getKlarnaCustomParamItems(
+		return EMerchantPayHelper::getInvoiceCustomParamItems(
 			array(
 				'currency'   => $currency,
 				'additional' => array (
@@ -476,23 +477,23 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 
 		$this->load->language('extension/payment/emerchantpay_checkout');
 
-		$transaction_types = \Genesis\Api\Constants\Transaction\Types::getWPFTransactionTypes();
+		$transaction_types = Types::getWPFTransactionTypes();
 		$excluded_types    = EMerchantPayHelper::getRecurringTransactionTypes();
 
 		// Exclude SDD Recurring
-		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::SDD_INIT_RECURRING_SALE);
+		array_push($excluded_types, Types::SDD_INIT_RECURRING_SALE);
 
 		// Exclude PPRO transaction. This is not standalone transaction type
-		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::PPRO);
+		array_push($excluded_types, Types::PPRO);
 
 		// Exclude GooglePay transaction. In this way Google Pay Payment types will be introduced
-		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::GOOGLE_PAY);
+		array_push($excluded_types, Types::GOOGLE_PAY);
 
 		// Exclude PayPal transaction. In this way PayPal Payment types will be introduced
-		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::PAY_PAL);
+		array_push($excluded_types, Types::PAY_PAL);
 
 		// Exclude Apple Pay transaction. This is not standalone transaction type
-		array_push($excluded_types, \Genesis\Api\Constants\Transaction\Types::APPLE_PAY);
+		array_push($excluded_types, Types::APPLE_PAY);
 
 		// Exclude Transaction Types
 		$transaction_types = array_diff($transaction_types, $excluded_types);
@@ -543,7 +544,7 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 			$name = $this->language->get('text_transaction_' . $type);
 
 			if (strpos($name, 'text_transaction') !== false) {
-				if (\Genesis\Api\Constants\Transaction\Types::isValidTransactionType($type)) {
+				if (Types::isValidTransactionType($type)) {
 					$name = \Genesis\Api\Constants\Transaction\Names::getName($type);
 				} else {
 					$name = strtoupper($type);
@@ -640,18 +641,18 @@ class ModelExtensionPaymentEmerchantPayCheckout extends Model
 		$this->load->language('extension/payment/emerchantpay_checkout');
 
 		return array(
-			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE    => array(
-				'id'   => \Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE,
+			Types::INIT_RECURRING_SALE    => array(
+				'id'   => Types::INIT_RECURRING_SALE,
 				'name' => $this->language->get(
 					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
-					\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE
+					Types::INIT_RECURRING_SALE
 				)
 			),
-			\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D => array(
-				'id'   => \Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D,
+			Types::INIT_RECURRING_SALE_3D => array(
+				'id'   => Types::INIT_RECURRING_SALE_3D,
 				'name' => $this->language->get(
 					EMerchantPayHelper::TRANSACTION_LANGUAGE_PREFIX .
-					\Genesis\Api\Constants\Transaction\Types::INIT_RECURRING_SALE_3D
+					Types::INIT_RECURRING_SALE_3D
 				)
 			),
 		);

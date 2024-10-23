@@ -17,8 +17,9 @@
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU General Public License, version 2 (GPL-2.0)
  */
 
-use Genesis\Api\Request\Financial\Alternatives\Klarna\Item;
-use Genesis\Api\Request\Financial\Alternatives\Klarna\Items;
+use Genesis\Api\Constants\Financial\Alternative\Transaction\ItemTypes;
+use Genesis\Api\Request\Financial\Alternatives\Transaction\Item as InvoiceItem;
+use Genesis\Api\Request\Financial\Alternatives\Transaction\Items as InvoiceItems;
 
 if (!class_exists('\Genesis\Genesis', false)) {
 	if (strpos(DIR_APPLICATION, 'admin') === false) {
@@ -102,7 +103,7 @@ class EMerchantPayHelper
 	}
 
 	/**
-	 * Create Klarna Authorize Items
+	 * Create Invoice Authorize Items
 	 *
 	 * @param $order
 	 *      Array array (
@@ -113,52 +114,58 @@ class EMerchantPayHelper
 	 *          )
 	 *      )
 	 *
-	 * @return \Genesis\Api\Request\Financial\Alternatives\Klarna\Items
+	 * @return InvoiceItems
 	 * @throws \Genesis\Exceptions\ErrorParameter
 	 */
-	public static function getKlarnaCustomParamItems($order)
+	public static function getInvoiceCustomParamItems($order)
 	{
 		$tax_class_ids = self::getTaxClassIdFromProductInfo($order['additional']['product_info']);
+		$currency_precision = Genesis\Utils\Currency::fetchCurrencyExponent($order['currency']);
 
-		$items = new Items($order['currency']);
+		$items = new InvoiceItems();
+		$items->setCurrency($order['currency']);
+
 		foreach ($order['additional']['product_order_info'] as $product) {
-			$tax_class_id = \Genesis\Api\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_PHYSICAL;
-			if ($tax_class_ids[$product['product_id']] == ModelPaymentEmerchantPayBase::OC_TAX_CLASS_VIRTUAL_PRODUCT) {
-				$tax_class_id = \Genesis\Api\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_DIGITAL;
+			$tax_class_id = ItemTypes::PHYSICAL;
+
+			if ($tax_class_ids[$product['product_id']] ==
+				ModelExtensionPaymentEmerchantPayBase::OC_TAX_CLASS_VIRTUAL_PRODUCT
+			) {
+				$tax_class_id = ItemTypes::DIGITAL;
 			}
 
-			$klarna_item = new Item(
-				$product['name'],
-				$tax_class_id,
-				$product['quantity'],
-				$product['price']
-			);
-			$items->addItem($klarna_item);
+			$invoice_item = new InvoiceItem();
+			$invoice_item
+				->setName($product['name'])
+				->setItemType($tax_class_id)
+				->setQuantity($product['quantity'])
+				->setUnitPrice(round($product['price'], $currency_precision));
 
+			$items->addItem($invoice_item);
 		}
 
 		$taxes = floatval(self::getTaxFromOrderTotals($order['additional']['order_totals']));
 		if ($taxes) {
-			$items->addItem(
-				new Item(
-					'Taxes',
-					\Genesis\Api\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_SURCHARGE,
-					1,
-					$taxes
-				)
-			);
+			$invoice_item = new InvoiceItem();
+			$invoice_item
+				->setName('Taxes')
+				->setItemType(ItemTypes::SURCHARGE)
+				->setQuantity(1)
+				->setUnitPrice(round($taxes, $currency_precision));
+
+			$items->addItem($invoice_item);
 		}
 
 		$shipping = floatval(self::getShippingFromOrderTotals($order['additional']['order_totals']));
 		if ($shipping) {
-			$items->addItem(
-				new Item(
-					'Shipping Costs',
-					\Genesis\Api\Request\Financial\Alternatives\Klarna\Item::ITEM_TYPE_SHIPPING_FEE,
-					1,
-					$shipping
-				)
-			);
+			$invoice_item = new InvoiceItem();
+			$invoice_item
+				->setName('Shipping Costs')
+				->setItemType(ItemTypes::SHIPPING_FEE)
+				->setQuantity(1)
+				->setUnitPrice(round($shipping, $currency_precision));
+
+			$items->addItem($invoice_item);
 		}
 
 		return $items;
