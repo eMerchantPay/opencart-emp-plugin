@@ -362,6 +362,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			"{$this->module_name}_threeds_challenge_indicator" => $this->getFieldValue("{$this->module_name}_threeds_challenge_indicator"),
 			"{$this->module_name}_sca_exemption"               => $this->getFieldValue("{$this->module_name}_sca_exemption"),
 			"{$this->module_name}_sca_exemption_amount"        => $this->getFieldValue("{$this->module_name}_sca_exemption_amount"),
+			"{$this->module_name}_order_email_create"          => $this->getFieldValue("{$this->module_name}_order_email_create"),
+			"{$this->module_name}_order_email_payment_failure" => $this->getFieldValue("{$this->module_name}_order_email_payment_failure"),
 
 			'action' => $this->url->link("{$this->route_prefix}payment/{$this->module_name}", $this->getTokenParam() . '=' . $this->getToken(), 'SSL'),
 			'cancel' =>	$this->getPaymentLink($this->getToken()),
@@ -398,6 +400,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			"{$this->module_name}_threeds_challenge_indicator" => ChallengeIndicators::NO_PREFERENCE,
 			"{$this->module_name}_sca_exemption"               => ScaExemptions::EXEMPTION_LOW_RISK,
 			"{$this->module_name}_sca_exemption_amount"        => 100,
+			"{$this->module_name}_order_email_create"          => 1,
+			"{$this->module_name}_order_email_payment_failure" => 1,
 		);
 
 		foreach ($default_param_values as $key => $default_value)
@@ -429,6 +433,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 * Builds an array with the language phrases used on the templates
 	 *
 	 * @return mixed
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 */
 	protected function buildLanguagePhrases()
 	{
@@ -474,6 +480,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			'entry_threeds_challenge_indicator',
 			'entry_sca_exemption',
 			'entry_sca_exemption_value',
+			'entry_order_email_create',
+			'entry_order_email_payment_failure',
 
 			'entry_order_status',
 			'entry_async_order_status',
@@ -506,6 +514,8 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 			'help_threeds_challenge_indicator',
 			'help_sca_exemption',
 			'help_sca_exemption_value',
+			'help_order_email_create',
+			'help_order_email_payment_failure',
 
 			'button_save',
 			'button_cancel',

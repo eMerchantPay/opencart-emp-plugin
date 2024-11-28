@@ -285,6 +285,38 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label class="col-sm-2 control-label">
+                            <span data-toggle="tooltip" title="<?php echo $help_order_email_create; ?>">
+                                <?php echo $entry_order_email_create;?>
+                            </span>
+                                </label>
+                                <div class="col-sm-10 bootstrap-checkbox-holder">
+                                    <input type="hidden" name="emerchantpay_checkout_order_email_create"
+                                           value="<?php echo $emerchantpay_checkout_order_email_create;?>" />
+                                    <input type="checkbox" class="bootstrap-checkbox"
+                                    <?php if ($emerchantpay_checkout_order_email_create) { ?>
+                                    checked="checked"
+                                    <?php } ?>
+                                    />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">
+                            <span data-toggle="tooltip" title="<?php echo $help_order_email_payment_failure; ?>">
+                                <?php echo $entry_order_email_payment_failure;?>
+                            </span>
+                                </label>
+                                <div class="col-sm-10 bootstrap-checkbox-holder">
+                                    <input type="hidden" name="emerchantpay_checkout_order_email_payment_failure"
+                                           value="<?php echo $emerchantpay_checkout_order_email_payment_failure;?>" />
+                                    <input type="checkbox" class="bootstrap-checkbox"
+                                    <?php if ($emerchantpay_checkout_order_email_payment_failure) { ?>
+                                    checked="checked"
+                                    <?php } ?>
+                                    />
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label class="col-sm-2 control-label" for="input-total">
                             <span data-toggle="tooltip" title="<?php echo $help_total; ?>">
                                 <?php echo $entry_total; ?>

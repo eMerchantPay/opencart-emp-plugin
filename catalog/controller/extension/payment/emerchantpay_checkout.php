@@ -304,7 +304,7 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 
 				$this->model_checkout_order->addOrderHistory(
 					$this->session->data['order_id'],
-					$this->config->get('emerchantpay_checkout_order_status_id'),
+					$this->config->get('emerchantpay_checkout_order_email_create') ? $this->config->get('emerchantpay_checkout_order_status_id') : 0,
 					$this->language->get('text_payment_status_initiated'),
 					true
 				);
@@ -424,7 +424,7 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 						case \Genesis\Api\Constants\Transaction\States::ERROR:
 							$this->model_checkout_order->addOrderHistory(
 								$transaction['order_id'],
-								$this->config->get('emerchantpay_checkout_order_failure_status_id'),
+								$this->config->get('emerchantpay_checkout_order_email_payment_failure') ? $this->config->get('emerchantpay_checkout_order_failure_status_id') : 0,
 								$this->language->get('text_payment_status_unsuccessful'),
 								true
 							);
