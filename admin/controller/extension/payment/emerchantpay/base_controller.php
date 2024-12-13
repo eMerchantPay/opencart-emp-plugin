@@ -1241,7 +1241,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 	 * @return string
 	 */
 	protected function getCurrencyCode() {
-		return $this->session->data['currency'];
+		return array_key_exists('currency', $this->session->data) ? $this->session->data['currency'] : '';
 	}
 
 	/**
@@ -1256,7 +1256,11 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 		$this->load->model('localisation/currency');
 		$currency = $this->model_localisation_currency->getCurrencyByCode($currency_code);
 
-		$currency_symbol = ($currency['symbol_left']) ? $currency['symbol_left'] : $currency['symbol_right'];
+		$currency['symbol_left']  = array_key_exists('symbol_left', $currency) ? $currency['symbol_left'] : '';
+		$currency['symbol_right'] = array_key_exists('symbol_right', $currency) ? $currency['symbol_right'] : '';
+		$currency['code']         = array_key_exists('code', $currency) ? $currency['code'] : '';
+
+		$currency_symbol = (!empty($currency['symbol_left'])) ? $currency['symbol_left'] : $currency['symbol_right'];
 		if (empty($currency_symbol))
 			$currency_symbol = $currency['code'];
 
