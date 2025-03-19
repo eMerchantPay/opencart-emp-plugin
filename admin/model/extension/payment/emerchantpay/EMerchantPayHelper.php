@@ -233,7 +233,7 @@ class EMerchantPayHelper
 			\Genesis\Api\Constants\Banks::BCT => 'Bancontact',
 			\Genesis\Api\Constants\Banks::BLK => 'BLIK',
 			\Genesis\Api\Constants\Banks::SE  => 'SPEI',
-			\Genesis\Api\Constants\Banks::PID => 'LatiPay'
+			\Genesis\Api\Constants\Banks::PID => 'PayID'
 		];
 	}
 

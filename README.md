@@ -6,8 +6,8 @@ This is a Payment Module for OpenCart, that gives you the ability to process pay
 Requirements
 ------------
 
-* OpenCart 3.0.X - 3.0.3.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
-* [GenesisPHP v2.0.4](https://github.com/GenesisGateway/genesis_php/tree/2.0.4) - (Integrated in Module)
+* OpenCart 3.0.X - 3.0.4.X (due to architectural changes, this module is __incompatible__ with OpenCart 1.X and 2.0.X)
+* [GenesisPHP v2.1.2](https://github.com/GenesisGateway/genesis_php/tree/2.1.2) - (Integrated in Module)
 
 GenesisPHP Requirements
 ------------
@@ -98,7 +98,7 @@ Supported Transactions & Payment Methods
     * __Bancontact__ 
     * __BLIK__
     * __SPEI__
-    * __LatiPay__
+    * __PayID__
   * __OXXO__
   * __P24__
   * __Pago Facil__

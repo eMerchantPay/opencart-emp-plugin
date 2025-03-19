@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  *
  * @author      emerchantpay
- * @copyright   Copyright (C) 2015-2024 emerchantpay Ltd.
+ * @copyright   Copyright (C) 2015-2025 emerchantpay Ltd.
  * @license     http://opensource.org/licenses/MIT The MIT License
  */
 
@@ -57,10 +57,11 @@ class Payers extends Request
     {
         $this->config = CommonUtils::createArrayObject(
             [
-                'protocol' => Request::PROTOCOL_HTTPS,
-                'port'     => Request::PORT_HTTPS,
-                'type'     => Request::METHOD_GET,
-                'format'   => Builder::XML
+                'protocol'      => Request::PROTOCOL_HTTPS,
+                'port'          => Request::PORT_HTTPS,
+                'type'          => Request::METHOD_GET,
+                'format'        => Builder::XML,
+                'authorization' => Request::AUTH_TYPE_BASIC
             ]
         );
     }

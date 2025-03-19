@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  *
  * @author      emerchantpay
- * @copyright   Copyright (C) 2015-2024 emerchantpay Ltd.
+ * @copyright   Copyright (C) 2015-2025 emerchantpay Ltd.
  * @license     http://opensource.org/licenses/MIT The MIT License
  */
 
@@ -65,6 +65,16 @@ class PayoutPaymentTypesParameters
      * Payment Type Pix_b2b
      */
     const PIX_B2B = 'pix_b2b';
+
+    /**
+     * Payment Type Clabe
+     */
+    const CLABE = 'clabe';
+
+    /**
+     * Payment Type Cellphone
+     */
+    const CELLPHONE = 'cellphone';
 
     /**
      * Get all available Payment Types

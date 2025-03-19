@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  *
  * @author      emerchantpay
- * @copyright   Copyright (C) 2015-2024 emerchantpay Ltd.
+ * @copyright   Copyright (C) 2015-2025 emerchantpay Ltd.
  * @license     http://opensource.org/licenses/MIT The MIT License
  */
 
@@ -71,10 +71,11 @@ class GetTier extends BaseRequest
     {
         $this->config = Common::createArrayObject(
             [
-                'protocol' => Request::PROTOCOL_HTTPS,
-                'port'     => Request::PORT_HTTPS,
-                'type'     => Request::METHOD_GET,
-                'format'   => Builder::JSON
+                'protocol'      => Request::PROTOCOL_HTTPS,
+                'port'          => Request::PORT_HTTPS,
+                'type'          => Request::METHOD_GET,
+                'format'        => Builder::JSON,
+                'authorization' => Request::AUTH_TYPE_BASIC
             ]
         );
     }
