@@ -614,7 +614,7 @@ abstract class ModelExtensionPaymentEmerchantPayBase extends Model
 					'usage'            => $this->getUsage(),
 					'remote_address'   => $this->request->server['REMOTE_ADDR'],
 					'reference_id'     => $rec_data['reference'],
-					'amount'           => $rec_data['amount'],
+					'amount'           => $this->currency->format($rec_data['amount'], $rec_data['currency_code'], false, false),
 					'currency'         => $rec_data['currency_code']
 				);
 

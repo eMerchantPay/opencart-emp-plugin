@@ -216,8 +216,8 @@ class ControllerExtensionPaymentEmerchantPayCheckout extends ControllerExtension
 
 				'language'		     => $this->model_extension_payment_emerchantpay_checkout->getLanguage(),
 
-				'currency'		     => $this->model_extension_payment_emerchantpay_checkout->getCurrencyCode(),
-				'amount'			 => (float)$order_info['total'],
+				'currency'		     => $order_info['currency_code'],
+				'amount'		     => $this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false),
 
 				'customer_email'	 => $order_info['email'],
 				'customer_phone'	 => $order_info['telephone'],

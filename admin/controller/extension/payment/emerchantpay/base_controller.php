@@ -580,7 +580,7 @@ abstract class ControllerExtensionPaymentEmerchantPayBase extends Controller
 				foreach ($transactions as &$transaction) {
 					/* OpenCart 2.2.x Fix (Cart\Currency does not check if the given currency code exists */
 					if (($has_currency_method && $this->currency->has($transaction['currency'])) || (!$has_currency_method && !empty($transaction['currency'])))
-						$transaction['amount'] = $this->currency->format($transaction['amount'], $transaction['currency']);
+						$transaction['amount'] = $this->currency->format($transaction['amount'], $transaction['currency'], true);
 					else /* No Currency Code is stored on Void Transaction */
 						$transaction['amount'] = "";
 
