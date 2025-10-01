@@ -28,6 +28,7 @@ namespace Genesis\Api\Request\Financial\GiftCards;
 
 use Genesis\Api\Constants\Transaction\Types;
 use Genesis\Api\Request\Base\Financial\GiftCard;
+use Genesis\Api\Traits\Request\TokenizationAttributes;
 
 /**
  * Class Intersolve
@@ -38,6 +39,8 @@ use Genesis\Api\Request\Base\Financial\GiftCard;
  */
 class Intersolve extends GiftCard
 {
+    use TokenizationAttributes;
+
     /**
      * Returns the Request transaction type
      * @return string
@@ -45,5 +48,18 @@ class Intersolve extends GiftCard
     protected function getTransactionType()
     {
         return Types::INTERSOLVE;
+    }
+
+    /**
+     * Return request structure
+     *
+     * @return array
+     */
+    protected function getPaymentTransactionStructure()
+    {
+        return array_merge(
+            parent::getPaymentTransactionStructure(),
+            $this->getTokenizationStructure()
+        );
     }
 }

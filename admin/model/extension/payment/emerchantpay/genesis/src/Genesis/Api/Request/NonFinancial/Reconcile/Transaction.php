@@ -26,13 +26,17 @@
 
 namespace Genesis\Api\Request\NonFinancial\Reconcile;
 
+use Genesis\Api\Request\Base\NonFinancial\Reconcile\BaseRequest;
+use Genesis\Exceptions\EnvironmentNotSet;
+use Genesis\Utils\Common as CommonUtils;
+
 /**
  * Reconcile request by arn, transaction_id or unique_id
  *
  * @package    Genesis
  * @subpackage Request
  */
-class Transaction extends \Genesis\Api\Request
+class Transaction extends BaseRequest
 {
     /**
      * Acquirer's Reference Number
@@ -59,12 +63,14 @@ class Transaction extends \Genesis\Api\Request
      * Set the per-request configuration
      *
      * @return void
+     *
+     * @throws EnvironmentNotSet
      */
     protected function initConfiguration()
     {
-        $this->initXmlConfiguration();
+        $this->path = 'reconcile';
 
-        $this->initApiGatewayConfiguration('reconcile');
+        parent::initConfiguration();
     }
 
     /**
@@ -78,7 +84,7 @@ class Transaction extends \Genesis\Api\Request
             'id'  => ['arn', 'transaction_id', 'unique_id']
         ];
 
-        $this->requiredFieldsGroups = \Genesis\Utils\Common::createArrayObject($requiredFieldsGroups);
+        $this->requiredFieldsGroups = CommonUtils::createArrayObject($requiredFieldsGroups);
     }
 
     /**
@@ -96,6 +102,6 @@ class Transaction extends \Genesis\Api\Request
             ]
         ];
 
-        $this->treeStructure = \Genesis\Utils\Common::createArrayObject($treeStructure);
+        $this->treeStructure = CommonUtils::createArrayObject($treeStructure);
     }
 }
